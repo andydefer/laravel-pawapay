@@ -1,0 +1,76 @@
+{
+    "authors": [
+        {
+            "email": "andykanidimbu@gmail.com",
+            "name": "andydefer"
+        }
+    ],
+    "autoload": {
+        "files": [
+            "src/helpers.php"
+        ],
+        "psr-4": {
+            "PawaPay\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "description": "Laravel SDK for integrating PawaPay Mobile Money payments (pay-ins, pay-outs, and webhooks) across African markets.",
+    "extra": {
+        "laravel": {
+            "aliases": {
+                "PawaPay": "PawaPay\\Facades\\PawaPay"
+            },
+            "providers": [
+                "PawaPay\\PawaPayServiceProvider"
+            ]
+        }
+    },
+    "keywords": [
+        "laravel",
+        "laravel-package",
+        "pawapay",
+        "mobile-money",
+        "payments",
+        "payouts",
+        "africa",
+        "fintech",
+        "api",
+        "webhooks",
+        "eloquent",
+        "php",
+        "open-source"
+    ],
+    "license": "MIT",
+    "minimum-stability": "dev",
+    "name": "andydefer/laravel-pawapay",
+    "prefer-stable": true,
+    "require": {
+        "illuminate/database": "^12.0",
+        "illuminate/support": "^12.0",
+        "laravel/framework": "^12.0",
+        "php": "^8.2",
+        "spatie/laravel-data": "^4.19"
+    },
+    "require-dev": {
+        "barryvdh/laravel-ide-helper": "^3.6",
+        "larastan/larastan": "^3.8",
+        "laravel/pint": "^1.26",
+        "orchestra/testbench": "^10.8",
+        "phpunit/phpunit": "^12.5",
+        "rector/rector": "*",
+        "symfony/var-dumper": "^7.0",
+        "vimeo/psalm": "^6.14"
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "@php ./vendor/bin/testbench package:discover --ansi"
+        ],
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+    },
+    "type": "library"
+}
