@@ -15,17 +15,12 @@ class PawapayApiException extends Exception
     /**
      * Additional error data.
      *
-     * @var array
+     * @var mixed[]
      */
     private array $errorData;
 
     /**
      * Create a new API exception.
-     *
-     * @param string $message
-     * @param int $code
-     * @param array $errorData
-     * @param Throwable|null $previous
      */
     public function __construct(
         string $message = "",
@@ -40,7 +35,7 @@ class PawapayApiException extends Exception
     /**
      * Get the error data.
      *
-     * @return array
+     * @return mixed[]
      */
     public function getErrorData(): array
     {
@@ -50,7 +45,7 @@ class PawapayApiException extends Exception
     /**
      * Convert exception to array.
      *
-     * @return array
+     * @return array<string, string|int|mixed[]>
      */
     public function toArray(): array
     {

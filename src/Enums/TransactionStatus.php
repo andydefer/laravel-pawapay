@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Pawapay\Enums;
 
 enum TransactionStatus: string
@@ -16,6 +18,8 @@ enum TransactionStatus: string
         // Statuts intermédiaires
     case SUBMITTED = 'SUBMITTED';             // Soumis au MMO
     case ENQUEUED = 'ENQUEUED';               // En file d'attente
+    case PROCESSING = 'PROCESSING';           // En cours de traitement
+    case IN_RECONCILIATION = 'IN_RECONCILIATION'; // En cours de réconciliation
 
         // Statut de recherche
     case FOUND = 'FOUND';                     // Trouvé (check status response)

@@ -34,7 +34,7 @@ class PawapayConfigData extends Data
     public function getHeaders(): array
     {
         return array_merge($this->defaultHeaders, [
-            'Authorization' => "Bearer {$this->token}",
+            'Authorization' => 'Bearer ' . $this->token,
         ]);
     }
 }

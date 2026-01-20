@@ -5,15 +5,7 @@ declare(strict_types=1);
 namespace Tests;
 
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Str;
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
-use Pawapay\Data\PaymentPage\AmountDetailsData;
-use Pawapay\Data\PaymentPage\PaymentPageRequestData;
-use Pawapay\Enums\Currency;
-use Pawapay\Enums\Language;
-use Pawapay\Enums\SupportedCountry;
-use Pawapay\Enums\SupportedProvider;
-use Pawapay\Facades\Pawapay;
 use Pawapay\PawapayServiceProvider;
 
 /**

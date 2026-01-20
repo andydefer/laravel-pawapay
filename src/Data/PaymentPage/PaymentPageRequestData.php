@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pawapay\Data\PaymentPage;
 
+use InvalidArgumentException;
 use Pawapay\Enums\Language;
 use Pawapay\Enums\SupportedCountry;
 use Spatie\LaravelData\Attributes\WithCast;
@@ -24,19 +25,22 @@ final class PaymentPageRequestData extends Data
         #[WithCast(EnumCast::class)]
         public SupportedCountry|Optional $country,
         public string|Optional $reason,
-        /** @var array<mixed>|Optional Metadata libre */
+        /** @var array<int, array<string, mixed>>|Optional */
         public array|Optional $metadata
     ) {}
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public static function fromArray(array $data): static
     {
         $amountDetails = isset($data['amountDetails'])
             ? AmountDetailsData::fromArray($data['amountDetails'])
             : Optional::create();
 
-        $metadata = $data['metadata'] ?? Optional::create();
+        $metadata = self::validateMetadata($data['metadata'] ?? Optional::create());
 
-        return new static(
+        return new self(
             depositId: $data['depositId'],
             returnUrl: $data['returnUrl'],
             customerMessage: $data['customerMessage'] ?? Optional::create(),
@@ -51,5 +55,44 @@ final class PaymentPageRequestData extends Data
             reason: $data['reason'] ?? Optional::create(),
             metadata: $metadata
         );
+    }
+
+    /**
+     * @param array<int, array<string, mixed>>|Optional $metadata
+     * @return array<int, array<string, mixed>>|Optional
+     */
+    private static function validateMetadata(array|Optional $metadata): array|Optional
+    {
+        if ($metadata instanceof Optional) {
+            return $metadata;
+        }
+
+        if (! array_is_list($metadata)) {
+            throw new InvalidArgumentException('Metadata must be a list of associative arrays.');
+        }
+
+        foreach ($metadata as $index => $item) {
+            if (! is_array($item) || array_is_list($item)) {
+                throw new InvalidArgumentException(
+                    sprintf('Metadata item at index %d must be an associative array.', $index)
+                );
+            }
+
+            foreach ($item as $key => $value) {
+                if (! is_string($key)) {
+                    throw new InvalidArgumentException(
+                        sprintf('Metadata item at index %d must have string keys.', $index)
+                    );
+                }
+
+                if (! is_scalar($value)) {
+                    throw new InvalidArgumentException(
+                        sprintf('Metadata item at index %d must have scalar values.', $index)
+                    );
+                }
+            }
+        }
+
+        return $metadata;
     }
 }

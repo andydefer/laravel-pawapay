@@ -22,10 +22,11 @@ final class PaymentPageErrorResponseData extends Data
 
     /**
      * Crée l'objet depuis un tableau API
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): static
     {
-        return new static(
+        return new self(
             depositId: $data['depositId'] ?? Optional::create(),
             status: isset($data['status'])
                 ? TransactionStatus::from($data['status'])

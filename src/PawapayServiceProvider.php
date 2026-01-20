@@ -10,14 +10,11 @@ use Pawapay\Contracts\PawapayClientInterface;
 use Pawapay\Data\PawapayConfigData;
 use Pawapay\Services\PawapayClient;
 use Pawapay\Services\PawapayService;
-use Pawapay\Services\PawapayPaymentPageService;
 
 class PawapayServiceProvider extends ServiceProvider
 {
     /**
      * Register services.
-     *
-     * @return void
      */
     public function register(): void
     {
@@ -27,7 +24,7 @@ class PawapayServiceProvider extends ServiceProvider
         );
 
         // Register the client
-        $this->app->singleton(PawapayClientInterface::class, function (Application $app) {
+        $this->app->singleton(PawapayClientInterface::class, function (Application $app): PawapayClient {
             $config = $app->make('config');
 
             $configData = new PawapayConfigData(
@@ -48,29 +45,20 @@ class PawapayServiceProvider extends ServiceProvider
         });
 
         // Register the main service
-        $this->app->singleton(PawapayService::class, function (Application $app) {
+        $this->app->singleton(PawapayService::class, function (Application $app): PawapayService {
             return new PawapayService(
                 $app->make(PawapayClientInterface::class)
             );
         });
 
-        // Register the payment page service
-        $this->app->singleton(PawapayPaymentPageService::class, function (Application $app) {
-            return new PawapayPaymentPageService(
-                $app->make(PawapayClientInterface::class)
-            );
-        });
 
         // Create aliases for convenient access
         $this->app->alias(PawapayService::class, 'pawapay');
-        $this->app->alias(PawapayPaymentPageService::class, 'pawapay.payment-page');
         $this->app->alias(PawapayClientInterface::class, 'pawapay.client');
     }
 
     /**
      * Bootstrap services.
-     *
-     * @return void
      */
     public function boot(): void
     {
@@ -83,15 +71,12 @@ class PawapayServiceProvider extends ServiceProvider
 
     /**
      * Get the services provided by the provider.
-     *
-     * @return array
      */
     public function provides(): array
     {
         return [
             PawapayClientInterface::class,
             PawapayService::class,
-            PawapayPaymentPageService::class,
             'pawapay',
             'pawapay.payment-page',
             'pawapay.client'

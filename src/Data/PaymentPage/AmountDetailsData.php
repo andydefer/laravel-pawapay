@@ -17,9 +17,12 @@ class AmountDetailsData extends Data
         public Currency $currency
     ) {}
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public static function fromArray(array $data): static
     {
-        return new static(
+        return new self(
             amount: $data['amount'],
             currency: Currency::from($data['currency'])
         );

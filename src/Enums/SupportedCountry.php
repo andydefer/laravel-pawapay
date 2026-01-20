@@ -45,7 +45,7 @@ enum SupportedCountry: string
     {
         return array_filter(
             SupportedProvider::cases(),
-            fn(SupportedProvider $provider) => $this->isProviderForCountry($provider)
+            fn(SupportedProvider $provider): bool => $this->isProviderForCountry($provider)
         );
     }
 

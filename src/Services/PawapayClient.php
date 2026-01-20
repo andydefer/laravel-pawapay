@@ -8,12 +8,12 @@ use Pawapay\Contracts\PawapayClientInterface;
 use Pawapay\Data\PawapayConfigData;
 use Pawapay\Enums\PawaPayEndpoint;
 use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 class PawapayClient implements PawapayClientInterface
 {
     private PendingRequest $httpClient;
+
     private string $baseUrl;
 
     public function __construct(PawapayConfigData $config)
@@ -38,10 +38,10 @@ class PawapayClient implements PawapayClientInterface
         );
     }
 
-    public function get(PawaPayEndpoint $endpoint, array $query = [])
+    public function get(PawaPayEndpoint $endpoint, array $query = [], array $parameters = [])
     {
         return $this->httpClient->get(
-            $this->buildUrl($endpoint),
+            $this->buildUrl($endpoint, $parameters),
             $query
         );
     }
@@ -67,8 +67,14 @@ class PawapayClient implements PawapayClientInterface
         return $this->httpClient->delete($this->buildUrl($endpoint));
     }
 
-    private function buildUrl(PawaPayEndpoint $endpoint): string
+    private function buildUrl(PawaPayEndpoint $endpoint, array $parameters = []): string
     {
-        return rtrim($this->baseUrl, '/') . '/' . ltrim($endpoint->value, '/');
+        $path = $endpoint->value;
+
+        if (str_contains($path, '{') && $parameters !== []) {
+            $path = $endpoint->buildPath($parameters);
+        }
+
+        return rtrim($this->baseUrl, '/') . '/' . ltrim($path, '/');
     }
 }

@@ -29,6 +29,9 @@ class PredictProviderResponseData extends Data
         public string|Optional $status,
     ) {}
 
+    /**
+     * @param array<string, mixed> $response
+     */
     public static function fromApiResponse(array $response): self
     {
         // Check for success response

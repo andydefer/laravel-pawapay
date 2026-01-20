@@ -1,896 +1,1003 @@
-# Laravel Roster
+# Laravel PawaPay SDK
 
-![PHP Version](https://img.shields.io/badge/PHP-8.3%2B-blue)
+![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-blue)
 ![Laravel Version](https://img.shields.io/badge/Laravel-12%2B-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-2300%20passing-brightgreen)
-![Coverage](https://img.shields.io/badge/coverage-88%25-green)
+![Tests](https://img.shields.io/badge/tests-integration%20ready-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-comprehensive-blue)
+![Mobile Money](https://img.shields.io/badge/Mobile%20Money-Africa-brightgreen)
 
-**Roster** is a comprehensive Laravel package for advanced scheduling, availability, and booking management. Built with a robust architecture, it handles recurring availability, booked slots, and impediments with exhaustive business validation.
+**Laravel PawaPay SDK** is a comprehensive, type-safe Laravel package for integrating PawaPay Mobile Money payments across 21 African markets. Built with modern PHP practices, it provides a seamless interface for pay-ins, pay-outs, provider prediction, and webhook handling.
 
-## 📦 Installation
+## 📦 Features
+
+- ✅ **Full PawaPay API Coverage** - All endpoints implemented
+- ✅ **21 African Countries** - Complete market support
+- ✅ **Type-Safe DTOs** - Built with Spatie Laravel Data
+- ✅ **Comprehensive Error Handling** - Detailed failure codes
+- ✅ **Mobile Money Provider Prediction** - Automatic provider detection
+- ✅ **Payment Page Generation** - Hosted payment pages
+- ✅ **Direct Deposit Initiation** - Programmatic payments
+- ✅ **Deposit Status Tracking** - Real-time status monitoring
+- ✅ **Sandbox & Production** - Easy environment switching
+- ✅ **Extensive Testing** - Integration tests with real API
+- ✅ **Laravel Facade** - Clean, expressive syntax
+
+## 🚀 Installation
+
+### 1. Install via Composer
 
 ```bash
-composer require andydefer/laravel-roster
+composer require andydefer/laravel-pawapay
 ```
 
-Publish package resources:
+### 2. Publish Configuration
 
 ```bash
-php artisan roster:install
+php artisan vendor:publish --provider="Pawapay\\PawapayServiceProvider" --tag="pawapay-config"
 ```
 
-Or manually:
+### 3. Configure Environment Variables
 
-```bash
-# Configuration
-php artisan vendor:publish --tag=roster-config
+Add to your `.env` file:
 
-# Migrations
-php artisan vendor:publish --tag=roster-migrations
+```env
+# Environment (sandbox/production)
+PAWAPAY_ENVIRONMENT=sandbox
 
-# Run migrations
-php artisan migrate
+# API Token from PawaPay
+PAWAPAY_API_TOKEN=your_api_token_here
+
+# Optional: Customize timeouts and retries
+PAWAPAY_TIMEOUT=30
+PAWAPAY_RETRY_TIMES=3
+PAWAPAY_RETRY_SLEEP=100
 ```
 
-## 🚀 Quick Start
+### 4. Configuration File (`config/pawapay.php`)
 
-### 1. Add the trait to your models
-
-```php
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-use Roster\Traits\HasRoster;
-
-class Doctor extends Model
-{
-    use HasRoster;
-}
-```
-
-### 2. Create recurring availabilities
-
-```php
-// Create an availability for a doctor
-$availability = availability_for($doctor)->create([
-    'type' => 'consultation',
-    'daily_start' => '09:00:00',
-    'daily_end' => '17:00:00',
-    'days' => ['monday', 'wednesday', 'friday'],
-    'validity_start' => '2038-01-01',
-    'validity_end' => '2038-12-31',
-]);
-```
-
-### 3. Schedule appointments
-
-```php
-// Book a slot in this availability
-$schedule = schedule_for($availability)->create([
-    'title' => 'Annual Checkup - Patient A',
-    'start_datetime' => '2038-01-04 10:00:00',
-    'end_datetime' => '2038-01-04 11:00:00',
-    'status' => \Roster\Enums\ScheduleStatus::BOOKED,
-    'metadata' => ['patient_id' => 123],
-]);
-```
-
-### 4. Manage temporary unavailability
-
-```php
-// Block a slot for training
-$impediment = impediment_for($availability)->create([
-    'reason' => 'Mandatory medical training',
-    'start_datetime' => '2038-01-04 09:00:00',
-    'end_datetime' => '2038-01-04 12:00:00',
-]);
-```
-
-### 5. Search for available slots
-
-```php
-// Find the next available slot
-$nextSlot = schedule_for($availability)->findNextSlot(
-    durationMinutes: 45,
-    type: 'consultation',
-    startFrom: now()->addDay()
-);
-
-// Check availability for a specific slot
-$isAvailable = schedule_for($availability)->isTimeSlotAvailable(
-    start: '2038-01-06 14:00:00',
-    end: '2038-01-06 15:00:00',
-    type: 'consultation'
-);
-```
-
-## 🔗 Polymorphic Scheduling Link System
-
-Roster includes an advanced system that allows any Eloquent model to be associated with schedules with customizable metadata.
-
-### Attach resources to schedules
-
-```php
-use Roster\Traits\AttachableToSchedules;
-
-// Add the trait to your models
-class Room extends Model
-{
-    use AttachableToSchedules;
-}
-
-class Vehicle extends Model
-{
-    use AttachableToSchedules;
-}
-
-class Equipment extends Model
-{
-    use AttachableToSchedules;
-}
-
-// Usage: attach resources to a schedule
-$schedule = schedule_for($availability)->create([
-    'title' => 'Scheduled Surgery',
-    'start_datetime' => '2038-01-04 08:00:00',
-    'end_datetime' => '2038-01-04 12:00:00',
-]);
-
-// Attach resources with metadata
-$room = Room::find(1);
-$vehicle = Vehicle::find(1);
-$doctor = Doctor::find(1);
-
-$service = schedule_for($availability)->schedule($schedule);
-
-$service->attach($room, ['role' => 'operating_room', 'equipment' => 'surgical']);
-$service->attach($vehicle, ['role' => 'transport', 'urgent' => true]);
-$service->attach($doctor, ['role' => 'surgeon', 'specialty' => 'orthopedics']);
-
-// Attach multiple resources at once
-$service->attachMany([$room, $vehicle, $doctor], ['operation_id' => 'OP123']);
-```
-
-### Manage attached resources
-
-```php
-// Check if a resource is attached
-$service->hasAttached($room); // true
-
-// Retrieve all attached resources
-$attachedResources = $service->getAttached();
-// Collection containing room, vehicle, doctor
-
-// Filter by model type
-$rooms = $service->getAttachedByType(Room::class);
-$doctors = $service->getAttachedByType(Doctor::class);
-
-// Detach resources
-$service->detach($vehicle);
-$service->detachMany([$room, $doctor]);
-
-// Synchronize resources completely
-$service->sync([$room, $doctor], ['session' => 'morning']);
-
-// Detach all resources
-$service->detachAll();
-```
-
-### Direct usage from models
-
-```php
-// From an attachable model
-$room->isAttachedToSchedule($schedule); // true/false
-$room->attachToSchedule($schedule, ['role' => 'consultation']);
-$room->detachFromSchedule($schedule);
-
-// Get all schedules with metadata
-$schedulesWithMetadata = $room->attachedSchedulesWithLinkMetadata();
-
-// Filter by metadata
-$surgeries = $room->attachedSchedulesWithMetadata('role', 'operating_room');
-
-// Synchronize schedules
-$room->syncSchedules([$schedule1, $schedule2], ['default_room' => true]);
-```
-
-### Eloquent relationships
-
-```php
-// The polymorphic relationship is automatically available
-$room->attachedSchedules; // Collection of schedules
-$schedule->linkables; // Collection of attached models (via pivot)
-
-// With link metadata
-$room->attachedSchedules()->withPivot('metadata')->get();
-```
-
-### Advanced use cases
-
-#### 1. Operating room management
-
-```php
-// Prepare surgery with all necessary resources
-$surgerySchedule = schedule_for($availability)->create([
-    'title' => 'Knee Arthroscopy',
-    'start_datetime' => '2038-01-04 08:00:00',
-    'end_datetime' => '2038-01-04 10:00:00',
-]);
-
-$service = schedule_for($availability)->schedule($surgerySchedule);
-
-$service->attach($operatingRoom, [
-    'role' => 'operating_room',
-    'equipment' => ['arthroscope', 'monitor', 'instruments'],
-    'sterilization' => 'level_2'
-]);
-
-$service->attach($surgeon, [
-    'role' => 'primary_surgeon',
-    'specialty' => 'orthopedics',
-    'assistant_required' => true
-]);
-
-$service->attach($anesthesiologist, [
-    'role' => 'anesthesiologist',
-    'type_anesthesia' => 'general'
-]);
-
-$service->attach($nurse, [
-    'role' => 'instrument_nurse',
-    'experience' => 'senior'
-]);
-```
-
-#### 2. Shared resource booking
-
-```php
-// Two different schedules sharing the same resources
-$schedule1 = schedule_for($availability)->create([...]);
-$schedule2 = schedule_for($availability)->create([...]);
-
-$sharedRoom = Room::find(1);
-$sharedEquipment = Equipment::find(1);
-
-$service1 = schedule_for($availability)->schedule($schedule1);
-$service2 = schedule_for($availability)->schedule($schedule2);
-
-$service1->attach($sharedRoom, ['usage' => 'consultation']);
-$service2->attach($sharedRoom, ['usage' => 'training']);
-
-$service1->attach($sharedEquipment, ['reserved' => true]);
-// The system tracks which resource is used where and when
-```
-
-#### 3. Complex metadata for tracking
-
-```php
-$service->attach($patient, [
-    'medical_history' => ['hypertension', 'diabetes'],
-    'insurance' => 'ABC Insurance',
-    'priority' => 'high',
-    'contact' => [
-        'phone' => '555-0123',
-        'email' => 'patient@example.com'
-    ],
-    'notes' => ['allergic to penicillin', 'needs interpreter']
-]);
-```
-
-# 📋 Méthodes de Requête Modèle (Trait HasRoster)
-
-Le trait `HasRoster` inclut des méthodes pour récupérer les impediments et schedules d'un modèle dans une période donnée.
-
-## Méthodes Ajoutées
-
-```php
-// 1. Récupérer tous les items (impediments + schedules) dans une période
-$items = $model->getRosterItemsInPeriod($start, $end);
-// Retourne: ['impediments' => Collection, 'schedules' => Collection]
-
-// 2. Récupérer seulement les impediments dans une période
-$impediments = $model->getImpedimentsInPeriod($start, $end);
-
-// 3. Récupérer seulement les schedules dans une période
-$schedules = $model->getSchedulesInPeriod($start, $end);
-
-// 4. Vérifier s'il y a des conflits
-$hasConflicts = $model->hasConflictsInPeriod($start, $end);
-// Retourne true si au moins un impediment ou schedule existe
-```
-
-## Exemple Simple
-
-```php
-// Un médecin avec le trait HasRoster
-$doctor = Doctor::find(1);
-
-// Vérifier la disponibilité pour demain 10h-11h
-$start = Carbon::parse('2024-06-10 10:00:00');
-$end = Carbon::parse('2024-06-10 11:00:00');
-
-// Vérifier les conflits
-if ($doctor->hasConflictsInPeriod($start, $end)) {
-    // Récupérer les détails
-    $conflicts = $doctor->getRosterItemsInPeriod($start, $end);
-
-    echo "Schedules en conflit: " . $conflicts['schedules']->count();
-    echo "Impediments en conflit: " . $conflicts['impediments']->count();
-} else {
-    echo "Créneau disponible";
-}
-```
-
-## Cas d'Usage Pratique
-
-```php
-// Avant de créer un nouveau schedule
-public function createSchedule(Doctor $doctor, array $data)
-{
-    $start = Carbon::parse($data['start_datetime']);
-    $end = Carbon::parse($data['end_datetime']);
-
-    // Vérifier si le créneau est libre
-    if ($doctor->hasConflictsInPeriod($start, $end)) {
-        return response()->json([
-            'error' => 'Créneau non disponible',
-            'conflicts' => $doctor->getRosterItemsInPeriod($start, $end)
-        ], 422);
-    }
-
-    // Créer le schedule
-    return schedule_for($doctor->availabilities()->first())
-        ->create($data);
-}
-```
-
-
-## 📖 Core Concepts
-
-### Immutability Principle
-
-Roster prevents direct model mutations to ensure data integrity. All operations must go through appropriate services:
-
-```php
-// ❌ FORBIDDEN: Direct modification
-$availability->update(['daily_end' => '18:00:00']); // Throws exception
-
-// ✅ ALLOWED: Via service
-availability_for($doctor)->update($availability->id, [
-    'daily_end' => '18:00:00'
-]);
-```
-
-### Single-action context
-
-Each service is designed for a single action with its own context:
-
-```php
-// ❌ FORBIDDEN: Service reuse
-$service = availability_for($doctor);
-$service->create([...]);
-$service->update(1, [...]); // Corrupted context
-
-// ✅ ALLOWED: New context for each action
-availability_for($doctor)->create([...]);
-availability_for($doctor)->update(1, [...]);
-```
-
-### The 3 main entities
-
-1. **Availability**: Defines when a resource is available (days, times, period)
-2. **Schedule**: Represents a booked slot in an availability
-3. **Impediment**: Temporarily blocks an availability
-
-## 🛡️ Secure Architecture
-
-### Mutation access control
-
-The system uses two contexts to control access:
-
-```php
-// 1. Mutation context (internal)
-// Used by repositories to allow CRUD operations
-RosterMutationContext::allow(function () {
-    return Availability::create([...]); // Allowed in this context
-});
-
-// 2. Service context (public)
-// Used by helpers to allow service usage
-RosterServiceContext::allow(function () {
-    return $service->create([...]); // Allowed via helper
-});
-```
-
-### Secure helpers
-
-The `availability_for()`, `schedule_for()`, and `impediment_for()` helpers automatically create the necessary context:
-
-```php
-// These helpers automatically handle:
-// 1. Execution context creation
-// 2. Schedulable entity validation
-// 3. Reuse prevention
-```
-
-## 🔍 Advanced Search and Data Consistency
-
-### `first()` method for targeted search
-
-```php
-// Retrieve the first availability matching criteria
-$availability = availability_for($doctor)
-    ->whereType('consultation')
-    ->first();
-
-// Retrieve the next upcoming appointment
-$nextAppointment = schedule_for($availability)
-    ->setFilter('start_datetime', '>', now())
-    ->first();
-
-// Retrieve the first scheduled impediment
-$firstImpediment = impediment_for($availability)
-    ->setFilter('reason', 'like', '%training%')
-    ->first();
-```
-
-### Automatic days consistency
-
-The system automatically ensures consistency between specified days and validity periods:
-
-```php
-// During an update, days outside the period are automatically reconciled
-$availability = availability_for($doctor)->create([
-    'validity_start' => '2024-01-01',
-    'validity_end' => '2024-01-07', // Week from January 1-7
-    'days' => ['monday', 'wednesday', 'friday'],
-]);
-
-// If you extend the period, days are automatically adjusted
-availability_for($doctor)->update($availability->id, [
-    'validity_end' => '2024-01-14', // Two weeks
-    // Days remain consistent with the new period
-]);
-
-// Reconciliation behavior configuration
-// In config/roster.php:
-'reconciliation_warning' => env('ROSTER_RECONCILIATION_WARNING', false),
-// If true: PHP warning when days are outside the period
-// If false: silent reconciliation
-```
-
-### Standardized days sorting
-
-Utility functions always return days in standard week order (Monday → Sunday):
-
-```php
-$days = roster_days_in_period('2024-01-01', '2024-01-07');
-// Returns: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-// Automatically sorted in standard order
-```
-
-## 🎯 Exhaustive Business Validation
-
-Roster includes **17 validation rules** that guarantee system consistency:
-
-### Main rules:
-- **SchedulableValidationRule** (110) - Checks for schedulable context presence
-- **RequiredFieldsRule** (100) - Validates required fields per operation
-- **AvailabilityTemporalCoherenceRule** (100) - Ensures temporal coherence
-- **TemporalConflictRule** (80) - Prevents scheduling overlaps
-- **AvailabilityOverlapRule** (80) - Prevents availability overlaps
-- **TimeRangeRule** (85) - Validates time ranges (no multi-day spans)
-
-### Rule visualization:
-
-```bash
-# List all available rules
-php artisan roster:debug-rules
-
-# See rules for a specific entity
-php artisan roster:debug-rules availability --operation=create
-```
-
-## 📊 Real-world Usage Examples
-
-### Medical clinic management
-
-```php
-// Create availabilities for different specialists
-$cardiologist = Doctor::where('specialty', 'cardiology')->first();
-$availability = availability_for($cardiologist)->create([
-    'type' => 'consultation',
-    'daily_start' => '08:30:00',
-    'daily_end' => '12:30:00',
-    'days' => ['monday', 'wednesday', 'friday'],
-    'validity_start' => '2024-01-01',
-    'validity_end' => '2024-12-31',
-]);
-
-// Patient booking
-$appointment = schedule_for($availability)->create([
-    'title' => 'Cardiac Consultation',
-    'start_datetime' => '2024-06-10 10:00:00',
-    'end_datetime' => '2024-06-10 11:00:00',
-    'status' => ScheduleStatus::BOOKED,
-    'metadata' => [
-        'patient_id' => 'CARD001',
-        'priority' => 'medium',
-        'tests_required' => ['echocardiogram', 'stress_test']
-    ],
-]);
-
-// Quick search for next availability
-$nextAvailability = availability_for($cardiologist)
-    ->setFilter('validity_start', '>', now())
-    ->first();
-
-// Manage unavailability (training)
-impediment_for($availability)->create([
-    'reason' => 'Continuing education',
-    'start_datetime' => '2024-06-15 09:00:00',
-    'end_datetime' => '2024-06-15 12:00:00',
-    'metadata' => ['mandatory' => true, 'location' => 'Auditorium'],
-]);
-```
-
-### Room booking system
-
-```php
-// Two doctors sharing a room
-$room = Room::find(1);
-
-// First doctor uses the room on Monday
-$doctor1Availability = availability_for($doctor1)->create([
-    'type' => 'room_a',
-    'daily_start' => '09:00:00',
-    'daily_end' => '17:00:00',
-    'days' => ['monday', 'wednesday', 'friday'],
-    'validity_start' => '2024-01-01',
-    'validity_end' => '2024-12-31',
-]);
-
-// Second doctor uses the room on Tuesday
-$doctor2Availability = availability_for($doctor2)->create([
-    'type' => 'room_a',
-    'daily_start' => '09:00:00',
-    'daily_end' => '17:00:00',
-    'days' => ['tuesday', 'thursday'],
-    'validity_start' => '2024-01-01',
-    'validity_end' => '2024-12-31',
-]);
-
-// Search for first availability for urgent slot
-$urgentSlot = schedule_for($doctor1Availability)
-    ->setFilter('status', ScheduleStatus::AVAILABLE)
-    ->first();
-
-// System automatically prevents conflicts
-schedule_for($doctor1Availability)->create([
-    'title' => 'Room A usage - Dr. Smith',
-    'start_datetime' => '2024-06-10 10:00:00', // Monday
-    'end_datetime' => '2024-06-10 12:00:00',
-]);
-
-// ❌ This booking will fail (inter-doctor conflict)
-schedule_for($doctor2Availability)->create([
-    'title' => 'Room A usage - Dr. Jones',
-    'start_datetime' => '2024-06-10 11:00:00', // Same day as Dr. Smith
-    'end_datetime' => '2024-06-10 13:00:00',
-]);
-```
-
-### Recurrent impediment management
-
-```php
-// Create weekly availability
-$weeklyAvailability = availability_for($doctor)->create([
-    'type' => 'consultation',
-    'daily_start' => '08:00:00',
-    'daily_end' => '18:00:00',
-    'days' => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
-    'validity_start' => '2024-01-01',
-    'validity_end' => '2024-12-31',
-]);
-
-// Recurrent impediments (lunch break)
-$weekdays = ['2024-01-08', '2024-01-09', '2024-01-10', '2024-01-11', '2024-01-12'];
-
-foreach ($weekdays as $weekday) {
-    impediment_for($weeklyAvailability)->create([
-        'reason' => 'Lunch break',
-        'start_datetime' => Carbon::parse($weekday)->setTime(12, 0, 0),
-        'end_datetime' => Carbon::parse($weekday)->setTime(13, 0, 0),
-        'metadata' => ['type' => 'lunch', 'recurring' => true],
-    ]);
-}
-
-// Find first available slot after impediments
-$firstAvailableSlot = schedule_for($weeklyAvailability)
-    ->setFilter('start_datetime', '>', now())
-    ->first();
-
-// Find available slots despite impediments
-$availableSlots = schedule_for($weeklyAvailability)->findAvailableSlots(
-    startDate: '2024-01-08',
-    endDate: '2024-01-12',
-    durationMinutes: 60,
-    type: 'consultation'
-);
-```
-
-## 🔧 Complete API
-
-### Availability Service
-
-```php
-// CRUD
-availability_for($schedulable)->create($data);
-availability_for($schedulable)->find($id);
-availability_for($schedulable)->update($id, $data);
-availability_for($schedulable)->delete($id);
-
-// Search
-availability_for($schedulable)->all();
-availability_for($schedulable)->setFilter('type', 'consultation')->all();
-availability_for($schedulable)->first(); // New method
-
-// Checks
-availability_for($schedulable)->isAvailableOnDate($date, $type);
-availability_for($schedulable)->getAvailabilityForTimeSlot($start, $end, $type);
-```
-
-### Schedule Service
-
-```php
-// Booking
-schedule_for($availability)->create($data);
-schedule_for($availability)->update($id, $data);
-schedule_for($availability)->delete($id);
-
-// Slot search
-schedule_for($availability)->findNextSlot($durationMinutes, $type, $startFrom);
-schedule_for($availability)->findAvailableSlots($startDate, $endDate, $durationMinutes, $type);
-schedule_for($availability)->first(); // New method
-
-// Checks
-schedule_for($availability)->isTimeSlotAvailable($start, $end, $type);
-schedule_for($availability)->isPeriodAvailable($start, $end, $type);
-
-// Polymorphic link management
-schedule_for($availability)->schedule($scheduleModel); // Set context
-schedule_for($availability)->schedule($scheduleModel)->attach($model, $metadata);
-schedule_for($availability)->schedule($scheduleModel)->detach($model);
-schedule_for($availability)->schedule($scheduleModel)->getAttached();
-schedule_for($availability)->schedule($scheduleModel)->sync($models, $metadata);
-```
-
-### Impediment Service
-
-```php
-// Impediment management
-impediment_for($availability)->create($data);
-impediment_for($availability)->update($id, $data);
-impediment_for($availability)->delete($id);
-
-// Search
-impediment_for($availability)->first(); // New method
-
-// Checks
-impediment_for($availability)->isTimeSlotBlocked($start, $end);
-impediment_for($availability)->getAvailableTimeSlots($start, $end, $type);
-```
-
-## ⚙️ Configuration
-
-### Configuration file (`config/roster.php`)
+The package publishes a configuration file with sensible defaults:
 
 ```php
 return [
-    // Allowed activity types
-    'allowed_types' => [
-        'consultation',
-        'surgery',
-        'emergency',
-        'training',
-        'room_a',
-        'echography',
-        'scan',
+    'api' => [
+        'sandbox_url' => 'https://api.sandbox.pawapay.io/v2',
+        'production_url' => 'https://api.pawapay.io/v2',
+        'token' => env('PAWAPAY_API_TOKEN'),
+        'timeout' => env('PAWAPAY_TIMEOUT', 30),
+        'retry_times' => env('PAWAPAY_RETRY_TIMES', 3),
+        'retry_sleep' => env('PAWAPAY_RETRY_SLEEP', 100),
     ],
 
-    // Minimum durations (in minutes)
-    'durations' => [
-        'minimum_availability_minutes' => 15,
-        'minimum_schedule_minutes' => 15,
-        'minimum_impediment_minutes' => 5,
-        'max_search_period_days' => 365,
-        'max_availability_days' => 365,
-    ],
+    'environment' => env('PAWAPAY_ENVIRONMENT', 'sandbox'),
 
-    // Validation rule cache
-    'cache' => [
-        'enabled' => env('ROSTER_CACHE_ENABLED', true),
-        'cache_file' => storage_path('framework/cache/roster_rules.php'),
-        'cache_max_age_hours' => 24,
+    'defaults' => [
+        'headers' => [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ],
     ],
-
-    // Days reconciliation
-    'reconciliation_warning' => env('ROSTER_RECONCILIATION_WARNING', false),
-    // Controls behavior during updates when days are
-    // outside the validity period:
-    // - true: triggers a PHP warning (E_USER_WARNING)
-    // - false: silent reconciliation
 ];
 ```
 
-### Environment variables
+## 🎯 Quick Start
 
-```env
-ROSTER_TIMEZONE=Europe/Paris
-ROSTER_CACHE_ENABLED=true
-ROSTER_RECONCILIATION_WARNING=false
-```
-
-## 🧪 Comprehensive Tests
-
-The package includes **2300 tests** covering all scenarios:
-
-```bash
-# Run all tests
-php artisan test
-
-# Integration tests
-php artisan test --group=integration
-
-# Performance tests
-php artisan test --filter=test_performance_and_load_scenario
-
-# Complex scenario tests
-php artisan test --filter=test_real_world_complex_scenario
-```
-
-### Tested scenarios:
-- ✅ Full availability lifecycle
-- ✅ Impediment management with conflicts
-- ✅ Intelligent booking system
-- ✅ Complex interactions (availabilities + impediments + schedules)
-- ✅ Multi-user conflicts with shared resources
-- ✅ Error handling and edge cases
-- ✅ Performance testing with massive data
-- ✅ Recovery after errors
-- ✅ Realistic complex scenario (hospital with multiple specialists)
-- ✅ Data consistency with automatic reconciliation
-- ✅ `first()` method for targeted search
-- ✅ Polymorphic link system with metadata
-- ✅ Attached resource management (rooms, vehicles, equipment)
-- ✅ Synchronization and detachment tests
-
-## 🚨 Error Handling
+### Using the Facade
 
 ```php
-use Roster\Validation\Exceptions\ValidationFailedException;
+use Pawapay\Facades\Pawapay;
 
-try {
-    $schedule = schedule_for($availability)->create($data);
-} catch (ValidationFailedException $e) {
-    // Get detailed violations with rule information
-    $violations = $e->getViolations();
-    // Array of ViolationData objects containing:
-    // - field name
-    // - error message
-    // - rule that triggered the violation
-    // - rule description for context
+// Predict mobile money provider
+$provider = Pawapay::predictProvider('+260763456789');
 
-    $detailedReport = $e->toDetailedArray();
-    // Includes rule descriptions for better debugging
+// Create payment page
+$paymentPage = Pawapay::createPaymentPage([
+    'depositId' => 'order_123',
+    'amount' => '100',
+    'currency' => 'ZMW',
+    'phoneNumber' => '+260763456789',
+    'country' => 'ZMB'
+]);
 
-    return response()->json([
-        'error' => 'validation_failed',
-        'message' => $e->getFormattedMessage(),
-        'violations' => $detailedReport['violations'],
-    ], 422);
+// Check deposit status
+$status = Pawapay::checkDepositStatus('order_123');
+```
+
+### Using Dependency Injection
+
+```php
+use Pawapay\Services\PawapayService;
+
+class PaymentController
+{
+    public function __construct(
+        private PawapayService $pawapay
+    ) {}
+
+    public function initiatePayment()
+    {
+        $response = $this->pawapay->createPaymentPage([
+            // ... payment data
+        ]);
+
+        return response()->json($response);
+    }
 }
 ```
 
-### Reconciliation warning handling
+## 🌍 Supported Countries & Providers
+
+PawaPay supports **21 African countries** with their respective mobile money providers:
+
+### Complete Country Coverage
+
+| Country | Code | Supported Providers | Currency |
+|---------|------|-------------------|----------|
+| **Benin** | `BEN` | MTN_MOMO_BEN, MOOV_BEN | XOF |
+| **Burkina Faso** | `BFA` | MOOV_BFA, ORANGE_BFA | XOF |
+| **Cameroon** | `CMR` | MTN_MOMO_CMR, ORANGE_CMR | XAF |
+| **Côte d'Ivoire** | `CIV` | MTN_MOMO_CIV, ORANGE_CIV, WAVE_CIV | XOF |
+| **DR Congo** | `COD` | VODACOM_MPESA_COD, AIRTEL_COD, ORANGE_COD | CDF, USD |
+| **Ethiopia** | `ETH` | MPESA_ETH | ETB |
+| **Gabon** | `GAB` | AIRTEL_GAB | XAF |
+| **Ghana** | `GHA` | MTN_MOMO_GHA, AIRTELTIGO_GHA, VODAFONE_GHA | GHS |
+| **Kenya** | `KEN` | MPESA_KEN | KES |
+| **Lesotho** | `LSO` | MPESA_LSO | LSL |
+| **Malawi** | `MWI` | AIRTEL_MWI, TNM_MWI | MWK |
+| **Mozambique** | `MOZ` | MOVITEL_MOZ, VODACOM_MOZ | MZN |
+| **Nigeria** | `NGA` | AIRTEL_NGA, MTN_MOMO_NGA | NGN |
+| **Republic of Congo** | `COG` | AIRTEL_COG, MTN_MOMO_COG | XAF |
+| **Rwanda** | `RWA` | AIRTEL_RWA, MTN_MOMO_RWA | RWF |
+| **Senegal** | `SEN` | FREE_SEN, ORANGE_SEN, WAVE_SEN | XOF |
+| **Sierra Leone** | `SLE` | ORANGE_SLE | SLE |
+| **Tanzania** | `TZA` | AIRTEL_TZA, VODACOM_TZA, TIGO_TZA, HALOTEL_TZA | TZS |
+| **Uganda** | `UGA` | AIRTEL_OAPI_UGA, MTN_MOMO_UGA | UGX |
+| **Zambia** | `ZMB` | AIRTEL_OAPI_ZMB, MTN_MOMO_ZMB, ZAMTEL_ZMB | ZMW |
+
+## 💰 Core Features
+
+### 1. Mobile Money Provider Prediction
+
+Automatically detect the mobile money provider from a phone number:
 
 ```php
-// Configuration to enable warnings
-config()->set('roster.reconciliation_warning', true);
+use Pawapay\Facades\Pawapay;
 
-// Capture warnings
-set_error_handler(function ($errno, $errstr) {
-    if ($errno === E_USER_WARNING && str_contains($errstr, 'outside the validity period')) {
-        // Log or handle the warning
-        Log::warning('Days reconciliation detected', ['message' => $errstr]);
-        return true; // Prevents propagation
-    }
-    return false;
-});
+$response = Pawapay::predictProvider('+260763456789');
 
-// During an update with days outside the period:
-availability_for($doctor)->update($availability->id, [
-    'validity_end' => '2024-01-10',
-    'days' => ['monday', 'saturday'], // 'saturday' will be filtered with warning
+if ($response->isSuccess()) {
+    echo "Country: " . $response->country->value; // ZMB
+    echo "Provider: " . $response->provider->value; // MTN_MOMO_ZMB
+    echo "Phone: " . $response->phoneNumber; // 260763456789
+} else {
+    echo "Error: " . $response->failureReason->failureMessage;
+}
+```
+
+**Supported Phone Formats:**
+- `+260763456789`
+- `260763456789`
+- `+260 763-456789`
+- `+260 (763) 456-789`
+
+### 2. Payment Page Creation
+
+Create hosted payment pages for customers:
+
+```php
+use Pawapay\Data\PaymentPage\PaymentPageRequestData;
+use Pawapay\Enums\Currency;
+use Pawapay\Enums\Language;
+use Pawapay\Enums\SupportedCountry;
+use Pawapay\Facades\Pawapay;
+
+$requestData = PaymentPageRequestData::fromArray([
+    'depositId' => (string) \Illuminate\Support\Str::uuid(),
+    'returnUrl' => 'https://yourstore.com/payment/complete',
+    'customerMessage' => 'Payment for Order #12345',
+    'amountDetails' => [
+        'amount' => '150.00',
+        'currency' => Currency::ZMW->value,
+    ],
+    'phoneNumber' => '260763456789',
+    'language' => Language::EN->value,
+    'country' => SupportedCountry::ZMB->value,
+    'reason' => 'Online Purchase - Electronics',
+    'metadata' => [
+        ['orderId' => 'ORD-123456789'],
+        ['customerId' => 'cust-789012'],
+        ['productId' => 'PROD-345678'],
+    ],
 ]);
 
-restore_error_handler();
+$response = Pawapay::createPaymentPage($requestData);
+
+if ($response->isSuccess()) {
+    // Redirect customer to payment page
+    return redirect($response->redirectUrl);
+} else {
+    // Handle error
+    return back()->withErrors([
+        'payment' => $response->failureReason->failureMessage
+    ]);
+}
 ```
 
-## 📊 Development Tools
+### 3. Direct Deposit Initiation
 
-### Validation rule debugging
+Initiate deposits programmatically without redirecting users:
 
-```bash
-# Display all rules
-php artisan roster:debug-rules
+```php
+use Pawapay\Data\Deposit\InitiateDepositRequestData;
+use Pawapay\Enums\Currency;
+use Pawapay\Enums\SupportedProvider;
+use Pawapay\Facades\Pawapay;
 
-# Filter by entity
-php artisan roster:debug-rules availability
+$requestData = InitiateDepositRequestData::fromArray([
+    'depositId' => (string) \Illuminate\Support\Str::uuid(),
+    'payer' => [
+        'type' => 'MMO',
+        'accountDetails' => [
+            'phoneNumber' => '260763456789',
+            'provider' => SupportedProvider::MTN_MOMO_ZMB->value,
+        ],
+    ],
+    'amount' => '100.00',
+    'currency' => Currency::ZMW->value,
+    'clientReferenceId' => 'INV-123456',
+    'customerMessage' => 'Payment for services rendered',
+    'metadata' => [
+        ['orderId' => 'ORD-123456'],
+        ['customerId' => 'customer@email.com'],
+        ['isPII' => true],
+    ],
+]);
 
-# Filter by operation
-php artisan roster:debug-rules availability --operation=create
+$response = Pawapay::initiateDeposit($requestData);
 
-# Display methods
-php artisan roster:debug-rules availability --show-methods
-
-# Display sources
-php artisan roster:debug-rules availability --show-source
+if ($response->isAccepted()) {
+    // Deposit accepted for processing
+    echo "Deposit ID: " . $response->depositId;
+    echo "Status: " . $response->status->value; // ACCEPTED
+    echo "Created: " . $response->created;
+} elseif ($response->isRejected()) {
+    // Deposit rejected
+    echo "Rejected: " . $response->failureReason->failureMessage;
+    echo "Error Code: " . $response->failureReason->failureCode->value;
+} elseif ($response->isDuplicateIgnored()) {
+    // Duplicate request (idempotent)
+    echo "Duplicate ignored for: " . $response->depositId;
+}
 ```
 
-### Cache management
+### 4. Deposit Status Checking
 
-```bash
-# Generate rule cache
-php artisan roster:cache-rules
+Monitor transaction status in real-time:
 
-# Display cache statistics
-php artisan roster:cache-rules --show
+```php
+use Pawapay\Facades\Pawapay;
 
-# Clear cache
-php artisan roster:cache-rules --clear
+$depositId = 'your_deposit_uuid';
+$status = Pawapay::checkDepositStatus($depositId);
 
-# Force regeneration
-php artisan roster:cache-rules --force
+if ($status->isFound()) {
+    $deposit = $status->data;
+
+    echo "Deposit ID: " . $deposit->depositId;
+    echo "Amount: " . $deposit->amount . " " . $deposit->currency->value;
+    echo "Status: " . $deposit->status->value;
+    echo "Country: " . $deposit->country->value;
+    echo "Phone: " . $deposit->payer->accountDetails->phoneNumber;
+    echo "Provider: " . $deposit->payer->accountDetails->provider->value;
+
+    // Check if transaction is complete
+    if ($deposit->isFinalStatus()) {
+        echo "Transaction completed";
+    } elseif ($deposit->isProcessing()) {
+        echo "Transaction in progress";
+    }
+
+    // Access metadata
+    if ($deposit->metadata) {
+        foreach ($deposit->metadata as $meta) {
+            print_r($meta);
+        }
+    }
+
+    // Check for failure reason
+    if ($deposit->failureReason) {
+        echo "Failure: " . $deposit->failureReason->failureMessage;
+        echo "Code: " . $deposit->failureReason->failureCode->value;
+    }
+} else {
+    echo "Deposit not found";
+}
 ```
 
-## 🤝 Contribution
+## 📊 Complete API Reference
 
-1. **Fork** the repository
-2. **Create a branch** (`git checkout -b feature/amazing-feature`)
-3. **Commit your changes** (`git commit -m 'Add amazing feature'`)
-4. **Push to the branch** (`git push origin feature/amazing-feature`)
-5. **Open a Pull Request**
+### Enums
 
-### Run tests
+The package provides comprehensive enums for type safety:
+
+#### `SupportedCountry` (21 countries)
+```php
+use Pawapay\Enums\SupportedCountry;
+
+$country = SupportedCountry::ZMB;
+echo $country->value; // "ZMB"
+echo $country->name; // "Zambia"
+
+// Get all providers for a country
+$providers = SupportedCountry::ZMB->getProviders();
+// Returns: [SupportedProvider::MTN_MOMO_ZMB, ...]
+```
+
+#### `SupportedProvider` (40+ providers)
+```php
+use Pawapay\Enums\SupportedProvider;
+
+$provider = SupportedProvider::MTN_MOMO_ZMB;
+echo $provider->value; // "MTN_MOMO_ZMB"
+
+// Get country from provider
+$country = $provider->getCountry();
+echo $country->value; // "ZMB"
+```
+
+#### `Currency` (17 currencies)
+```php
+use Pawapay\Enums\Currency;
+
+$currency = Currency::ZMW;
+echo $currency->value; // "ZMW"
+
+// Commonly used:
+Currency::ZMW; // Zambian Kwacha
+Currency::KES; // Kenyan Shilling
+Currency::GHS; // Ghanaian Cedi
+Currency::NGN; // Nigerian Naira
+Currency::USD; // US Dollar (DR Congo)
+```
+
+#### `TransactionStatus`
+```php
+use Pawapay\Enums\TransactionStatus;
+
+// Initiation statuses
+TransactionStatus::ACCEPTED
+TransactionStatus::REJECTED
+TransactionStatus::DUPLICATE_IGNORED
+
+// Final statuses
+TransactionStatus::COMPLETED
+TransactionStatus::FAILED
+
+// Intermediate statuses
+TransactionStatus::SUBMITTED
+TransactionStatus::ENQUEUED
+TransactionStatus::PROCESSING
+TransactionStatus::IN_RECONCILIATION
+
+// Search statuses
+TransactionStatus::FOUND
+TransactionStatus::NOT_FOUND
+```
+
+#### `FailureCode` (27 detailed codes)
+```php
+use Pawapay\Enums\FailureCode;
+
+// Technical errors
+FailureCode::NO_AUTHENTICATION
+FailureCode::INVALID_INPUT
+FailureCode::MISSING_PARAMETER
+FailureCode::INVALID_AMOUNT
+FailureCode::INVALID_PHONE_NUMBER
+
+// Transaction errors
+FailureCode::PAYMENT_NOT_APPROVED
+FailureCode::INSUFFICIENT_BALANCE
+FailureCode::PAYER_NOT_FOUND
+FailureCode::MANUALLY_CANCELLED
+
+// Get HTTP status code
+$code = FailureCode::INVALID_INPUT;
+echo $code->httpStatusCode(); // 400
+```
+
+#### `Language`
+```php
+use Pawapay\Enums\Language;
+
+Language::EN; // English
+Language::FR; // French
+```
+
+### Data Transfer Objects (DTOs)
+
+All API interactions use strongly-typed DTOs:
+
+#### Request DTOs
+```php
+use Pawapay\Data\PaymentPage\PaymentPageRequestData;
+use Pawapay\Data\Deposit\InitiateDepositRequestData;
+
+// From array
+$paymentRequest = PaymentPageRequestData::fromArray($data);
+
+// From constructor (type-safe)
+$depositRequest = new InitiateDepositRequestData(
+    depositId: 'uuid',
+    payer: $payerData,
+    amount: '100.00',
+    currency: Currency::ZMW,
+    // ... other parameters
+);
+```
+
+#### Response DTOs
+```php
+use Pawapay\Data\PaymentPage\PaymentPageSuccessResponseData;
+use Pawapay\Data\PaymentPage\PaymentPageErrorResponseData;
+use Pawapay\Data\Deposit\InitiateDepositResponseData;
+use Pawapay\Data\Responses\CheckDepositStatusWrapperData;
+
+// All responses have helper methods
+$response->isSuccess();
+$response->isFailure();
+$response->isAccepted();
+$response->isRejected();
+$response->isFound();
+$response->isNotFound();
+```
+
+### Service Methods
+
+#### `PawapayService` Class
+
+```php
+// 1. Provider Prediction
+predictProvider(string $phoneNumber): PredictProviderSuccessResponse|PredictProviderFailureResponse
+
+// 2. Payment Pages
+createPaymentPage(PaymentPageRequestData $request): PaymentPageSuccessResponseData|PaymentPageErrorResponseData
+
+// 3. Direct Deposits
+initiateDeposit(InitiateDepositRequestData $request): InitiateDepositResponseData
+
+// 4. Status Checking
+checkDepositStatus(string $depositId): CheckDepositStatusWrapperData
+```
+
+## 🔧 Advanced Usage
+
+### Idempotency
+
+All deposit operations are idempotent. Using the same `depositId` multiple times will result in `DUPLICATE_IGNORED` status:
+
+```php
+// First request
+$response1 = Pawapay::initiateDeposit($requestData);
+// Status: ACCEPTED
+
+// Second identical request
+$response2 = Pawapay::initiateDeposit($requestData);
+// Status: DUPLICATE_IGNORED (no duplicate transaction)
+```
+
+### Metadata Support
+
+Attach custom metadata to payments for tracking:
+
+```php
+$requestData = PaymentPageRequestData::fromArray([
+    // ... other fields
+    'metadata' => [
+        ['orderId' => 'ORD-123'],
+        ['userId' => 456],
+        ['cartId' => 'CART-789'],
+        ['channel' => 'web'],
+        ['version' => '2.0'],
+        ['items' => json_encode(['item1', 'item2'])],
+        ['custom_field' => 'custom_value'],
+    ],
+]);
+```
+
+Metadata is preserved throughout the payment lifecycle and can be retrieved when checking deposit status.
+
+### Phone Number Normalization
+
+The package automatically normalizes phone numbers:
+
+```php
+$response = Pawapay::predictProvider('+260 763-456-789');
+echo $response->phoneNumber; // "260763456789" (normalized)
+```
+
+### Error Handling Best Practices
+
+```php
+use Illuminate\Http\Client\RequestException;
+use Pawapay\Exceptions\PawapayApiException;
+
+try {
+    $response = Pawapay::predictProvider($phoneNumber);
+
+    if ($response->isFailure()) {
+        // API returned a business error
+        $errorCode = $response->failureReason->failureCode;
+        $errorMessage = $response->failureReason->failureMessage;
+
+        // Handle specific error codes
+        if ($errorCode === FailureCode::INVALID_PHONE_NUMBER) {
+            return back()->withErrors(['phone' => 'Invalid phone number']);
+        }
+
+        if ($errorCode === FailureCode::INSUFFICIENT_BALANCE) {
+            return back()->withErrors(['payment' => 'Insufficient balance']);
+        }
+    }
+
+    // Process successful response
+    return redirect($response->redirectUrl);
+
+} catch (RequestException $e) {
+    // Network or HTTP error
+    Log::error('PawaPay API request failed', [
+        'message' => $e->getMessage(),
+        'status' => $e->response->status(),
+        'body' => $e->response->body(),
+    ]);
+
+    return back()->withErrors([
+        'payment' => 'Payment service temporarily unavailable'
+    ]);
+
+} catch (PawapayApiException $e) {
+    // Package-specific exception
+    Log::error('PawaPay SDK error', [
+        'message' => $e->getMessage(),
+        'data' => $e->getErrorData(),
+    ]);
+
+    return back()->withErrors([
+        'payment' => 'Payment processing error'
+    ]);
+}
+```
+
+## ⚙️ Configuration Details
+
+### Timeouts and Retries
+
+Configure in `.env`:
+
+```env
+# Request timeout in seconds
+PAWAPAY_TIMEOUT=30
+
+# Number of retry attempts for failed requests
+PAWAPAY_RETRY_TIMES=3
+
+# Delay between retries in milliseconds
+PAWAPAY_RETRY_SLEEP=100
+```
+
+### Custom Headers
+
+Extend default headers in configuration:
+
+```php
+// config/pawapay.php
+'defaults' => [
+    'headers' => [
+        'Content-Type' => 'application/json',
+        'Accept' => 'application/json',
+        'X-Custom-Header' => 'Your-Value',
+    ],
+],
+```
+
+### Environment Switching
+
+```php
+// Switch to production
+config()->set('pawapay.environment', 'production');
+
+// Or use .env
+PAWAPAY_ENVIRONMENT=production
+```
+
+## 🔄 Complete Workflow Examples
+
+### E-commerce Checkout Flow
+
+```php
+use Pawapay\Facades\Pawapay;
+use Illuminate\Http\Request;
+
+class CheckoutController
+{
+    public function processPayment(Request $request)
+    {
+        // Validate input
+        $validated = $request->validate([
+            'phone' => 'required|string',
+            'amount' => 'required|numeric|min:1',
+            'order_id' => 'required|string',
+        ]);
+
+        // Predict provider
+        $providerResponse = Pawapay::predictProvider($validated['phone']);
+
+        if ($providerResponse->isFailure()) {
+            return back()->withErrors([
+                'phone' => 'Invalid phone number or unsupported country'
+            ]);
+        }
+
+        // Create payment page
+        $paymentResponse = Pawapay::createPaymentPage([
+            'depositId' => $validated['order_id'],
+            'returnUrl' => route('payment.callback'),
+            'customerMessage' => 'Payment for Order #' . $validated['order_id'],
+            'amountDetails' => [
+                'amount' => $validated['amount'],
+                'currency' => 'ZMW', // Get from user's country
+            ],
+            'phoneNumber' => $providerResponse->phoneNumber,
+            'language' => app()->getLocale() === 'fr' ? 'FR' : 'EN',
+            'country' => $providerResponse->country->value,
+            'reason' => 'Online Store Purchase',
+            'metadata' => [
+                ['orderId' => $validated['order_id']],
+                ['customerEmail' => auth()->user()->email],
+                ['items' => json_encode($cart->items)],
+            ],
+        ]);
+
+        if ($paymentResponse->isFailure()) {
+            return back()->withErrors([
+                'payment' => $paymentResponse->failureReason->failureMessage
+            ]);
+        }
+
+        // Redirect to PawaPay
+        return redirect($paymentResponse->redirectUrl);
+    }
+
+    public function paymentCallback(Request $request)
+    {
+        $depositId = $request->query('depositId');
+        $status = Pawapay::checkDepositStatus($depositId);
+
+        if ($status->isFound()) {
+            $deposit = $status->data;
+
+            if ($deposit->status === TransactionStatus::COMPLETED) {
+                // Mark order as paid
+                Order::where('uuid', $depositId)->update([
+                    'payment_status' => 'paid',
+                    'payment_method' => 'mobile_money',
+                    'payment_reference' => $deposit->providerTransactionId,
+                ]);
+
+                return view('payment.success', compact('deposit'));
+            } else {
+                // Payment failed or pending
+                return view('payment.pending', compact('deposit'));
+            }
+        }
+
+        return view('payment.error');
+    }
+}
+```
+
+### Subscription Service with Direct Deposits
+
+```php
+class SubscriptionController
+{
+    public function renewSubscription(Subscription $subscription)
+    {
+        // Get user's phone from profile
+        $user = $subscription->user;
+
+        // Create deposit request
+        $depositId = (string) Str::uuid();
+
+        $response = Pawapay::initiateDeposit([
+            'depositId' => $depositId,
+            'payer' => [
+                'type' => 'MMO',
+                'accountDetails' => [
+                    'phoneNumber' => $user->phone_number,
+                    'provider' => $user->mobile_money_provider,
+                ],
+            ],
+            'amount' => $subscription->amount,
+            'currency' => 'ZMW',
+            'clientReferenceId' => 'SUB-' . $subscription->id,
+            'customerMessage' => 'Monthly subscription renewal',
+            'metadata' => [
+                ['subscriptionId' => $subscription->id],
+                ['userId' => $user->id],
+                ['plan' => $subscription->plan],
+            ],
+        ]);
+
+        // Handle response
+        if ($response->isAccepted()) {
+            // Queue status check
+            CheckDepositStatus::dispatch($depositId)
+                ->delay(now()->addMinutes(5));
+
+            return response()->json([
+                'message' => 'Payment initiated',
+                'depositId' => $depositId,
+            ]);
+        } else {
+            return response()->json([
+                'error' => $response->failureReason->failureMessage,
+            ], 422);
+        }
+    }
+
+    public function webhook(Request $request)
+    {
+        // Verify webhook signature
+        $payload = $request->all();
+        $depositId = $payload['depositId'];
+
+        // Update subscription based on status
+        $status = Pawapay::checkDepositStatus($depositId);
+
+        if ($status->isFound() && $status->data->status === TransactionStatus::COMPLETED) {
+            // Update subscription
+            $metadata = collect($status->data->metadata);
+            $subscriptionId = $metadata->firstWhere('subscriptionId');
+
+            Subscription::find($subscriptionId)->update([
+                'status' => 'active',
+                'renewed_at' => now(),
+            ]);
+        }
+
+        return response()->json(['status' => 'processed']);
+    }
+}
+```
+
+## 🔐 Security Best Practices
+
+### 1. Store API Tokens Securely
+
+```env
+# Never commit tokens to version control
+PAWAPAY_API_TOKEN=${PAWAPAY_API_TOKEN}
+```
+
+### 2. Validate Input Data
+
+```php
+use Illuminate\Validation\Rule;
+
+$validated = $request->validate([
+    'phone' => [
+        'required',
+        'string',
+        'regex:/^(?:\+?\d{1,3}[- ]?)?\d{6,14}$/'
+    ],
+    'amount' => [
+        'required',
+        'numeric',
+        'min:1',
+        'max:100000' // Set reasonable limits
+    ],
+    'currency' => [
+        'required',
+        Rule::in(array_column(Currency::cases(), 'value'))
+    ],
+]);
+```
+
+### 3. Implement Webhook Signature Verification
+
+```php
+public function handleWebhook(Request $request)
+{
+    $signature = $request->header('X-PawaPay-Signature');
+    $payload = $request->getContent();
+    $secret = config('services.pawapay.webhook_secret');
+
+    $expectedSignature = hash_hmac('sha256', $payload, $secret);
+
+    if (!hash_equals($expectedSignature, $signature)) {
+        abort(401, 'Invalid webhook signature');
+    }
+
+    // Process webhook
+}
+```
+
+### 4. Monitor and Log Transactions
+
+```php
+use Illuminate\Support\Facades\Log;
+
+class PaymentService
+{
+    public function initiatePayment($data)
+    {
+        try {
+            $response = Pawapay::createPaymentPage($data);
+
+            Log::info('Payment initiated', [
+                'depositId' => $data['depositId'],
+                'amount' => $data['amountDetails']['amount'],
+                'currency' => $data['amountDetails']['currency'],
+                'response_status' => $response->status ?? 'unknown',
+            ]);
+
+            return $response;
+
+        } catch (Exception $e) {
+            Log::error('Payment initiation failed', [
+                'depositId' => $data['depositId'] ?? 'unknown',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            throw $e;
+        }
+    }
+}
+```
+
+## 🔄 Migration Guide
+
+### From Raw API Calls to Package
+
+**Before:**
+
+```php
+public function makePayment($data)
+{
+    $response = Http::withToken(config('pawapay.token'))
+        ->post('https://api.sandbox.pawapay.io/v2/paymentpage', $data);
+
+    if ($response->failed()) {
+        throw new Exception('Payment failed: ' . $response->body());
+    }
+
+    return $response->json();
+}
+```
+
+**After:**
+
+```php
+use Pawapay\Facades\Pawapay;
+use Pawapay\Data\PaymentPage\PaymentPageRequestData;
+
+public function makePayment($data)
+{
+    $requestData = PaymentPageRequestData::fromArray($data);
+    $response = Pawapay::createPaymentPage($requestData);
+
+    if ($response->isFailure()) {
+        throw new Exception('Payment failed: ' . $response->failureReason->failureMessage);
+    }
+
+    return $response;
+}
+```
+
+### Handling Breaking Changes
+
+When upgrading between major versions:
+
+1. **Backup your configuration**
+2. **Review changelog** for breaking changes
+3. **Update your code** to use new DTOs if needed
+4. **Test thoroughly** in sandbox environment
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how to get started:
+
+### 1. Fork the Repository
 
 ```bash
-# All tests
+git clone https://github.com/andydefer/laravel-pawapay.git
+cd laravel-pawapay
+composer install
+```
+
+### 2. Run Tests
+
+```bash
+# Unit tests
 composer test
 
-# With code coverage
-composer test-coverage
+# Integration tests (requires sandbox token)
+PAWAPAY_API_TOKEN=your_token composer test --group=integration
 
-# Check code style
+# Code style
 composer lint
+
+# Static analysis
+composer analyse
 ```
+
+### 3. Development Workflow
+
+```bash
+# 1. Create a feature branch
+git checkout -b feature/new-provider-support
+
+# 2. Make your changes
+# 3. Add tests
+# 4. Run tests
+composer test
+
+# 5. Check code style
+composer lint
+
+# 6. Commit with descriptive message
+git commit -m "feat: add support for new mobile money provider"
+
+# 7. Push and create PR
+git push origin feature/new-provider-support
+```
+
+### 4. Coding Standards
+
+- Follow PSR-12 coding standards
+- Write PHPStan level 9 compatible code
+- Add type hints for all methods
+- Include comprehensive tests
+- Update documentation for new features
+
+## 📚 Additional Resources
+
+### Official Documentation
+- [PawaPay API Documentation](https://docs.pawapay.io)
+- [Laravel Documentation](https://laravel.com/docs)
+
+### Community
+- [GitHub Issues](https://github.com/andydefer/laravel-pawapay/issues)
+- [Discord Community](https://discord.gg/your-link)
+- [Twitter Updates](https://twitter.com/your-handle)
+
+### Related Packages
+- [Laravel Cashier](https://laravel.com/docs/billing) - For Stripe integration
+- [Laravel Flutterwave](https://github.com/kingflamez/laravelrave) - For Flutterwave payments
+- [Laravel Paystack](https://github.com/unicodeveloper/laravel-paystack) - For Paystack integration
 
 ## 📄 License
 
-This package is open-source and available under the [MIT](LICENSE) license.
+This package is open-source software licensed under the [MIT license](LICENSE).
 
-## 🔗 Useful Links
+## 🏆 Support
 
-- [API Documentation](docs/api.md)
-- [Migration Guide](docs/migration.md)
-- [Changelog](CHANGELOG.md)
-- [Issues](https://github.com/vendor/laravel-roster/issues)
+If this package has been helpful to you, consider:
+
+- ⭐ Starring the repository on GitHub
+- 📢 Sharing with your network
+- 💼 Using it in your commercial projects
+- 🐛 Reporting issues and suggesting features
+
+## 📞 Need Help?
+
+- **Documentation**: Check the [GitHub Wiki](https://github.com/andydefer/laravel-pawapay/wiki)
+- **Issues**: [GitHub Issues](https://github.com/andydefer/laravel-pawapay/issues)
+- **Email**: andykanidimbu@gmail.com
+- **Twitter**: [@yourhandle](https://twitter.com/yourhandle)
 
 ---
 
-**Roster** - A professional solution for advanced scheduling management, designed for critical applications where every minute counts. ⚕️⏰✨
-
-With advanced search features, data consistency, exhaustive business validation, and a comprehensive polymorphic link system, Roster ensures the integrity of your scheduling systems in the most demanding environments.
+**Laravel PawaPay SDK** - Empowering African commerce with seamless mobile money payments. Built with ❤️ for the Laravel community in Africa and beyond.

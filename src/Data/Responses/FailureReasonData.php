@@ -18,7 +18,10 @@ class FailureReasonData extends Data
         public string $failureMessage,
     ) {}
 
-    public static function fromArray($data)
+    /**
+     * @param array<string, mixed> $data
+     */
+    public static function fromArray(array $data): self
     {
         // Si failureCode n'existe pas, utiliser une valeur par défaut
         $failureCodeValue = $data['failureCode'] ?? 'UNKNOWN_ERROR';
