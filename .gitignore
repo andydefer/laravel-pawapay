@@ -46,4 +46,4 @@ rector.php.cache
 erl_crash.dump
 
 # Prompts / AI files
-prompts/
+#prompts/

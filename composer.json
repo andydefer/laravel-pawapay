@@ -10,7 +10,7 @@
             "src/helpers.php"
         ],
         "psr-4": {
-            "PawaPay\\": "src/"
+            "Pawapay\\": "src/"
         }
     },
     "autoload-dev": {
@@ -18,14 +18,14 @@
             "Tests\\": "tests/"
         }
     },
-    "description": "Laravel SDK for integrating PawaPay Mobile Money payments (pay-ins, pay-outs, and webhooks) across African markets.",
+    "description": "Laravel SDK for integrating Pawapay Mobile Money payments (pay-ins, pay-outs, and webhooks) across African markets.",
     "extra": {
         "laravel": {
             "aliases": {
-                "PawaPay": "PawaPay\\Facades\\PawaPay"
+                "Pawapay": "Pawapay\\Facades\\Pawapay"
             },
             "providers": [
-                "PawaPay\\PawaPayServiceProvider"
+                "Pawapay\\PawapayServiceProvider"
             ]
         }
     },
@@ -53,7 +53,7 @@
         "illuminate/support": "^12.0",
         "laravel/framework": "^12.0",
         "php": "^8.2",
-        "spatie/laravel-data": "^4.19"
+        "spatie/laravel-data": "^4.15"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.6",

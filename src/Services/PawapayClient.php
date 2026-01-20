@@ -1,87 +1,74 @@
 <?php
 
-namespace PawaPay\Services;
+declare(strict_types=1);
 
+namespace Pawapay\Services;
+
+use Pawapay\Contracts\PawapayClientInterface;
+use Pawapay\Data\PawapayConfigData;
+use Pawapay\Enums\PawaPayEndpoint;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 
-class PawaPayClient
+class PawapayClient implements PawapayClientInterface
 {
-    protected string $apiKey;
-    protected string $baseUrl;
-    protected int $timeout;
+    private PendingRequest $httpClient;
+    private string $baseUrl;
 
-    public function __construct(
-        string $apiKey,
-        string $baseUrl,
-        int $timeout = 30
-    ) {
-        $this->apiKey = $apiKey;
-        $this->baseUrl = rtrim($baseUrl, '/');
-        $this->timeout = $timeout;
+    public function __construct(PawapayConfigData $config)
+    {
+        $this->baseUrl = $config->environment === 'production'
+            ? $config->productionUrl
+            : $config->sandboxUrl;
+
+        $this->httpClient = Http::withHeaders(array_merge(
+            $config->defaultHeaders,
+            ['Authorization' => 'Bearer ' . $config->token]
+        ))
+            ->timeout($config->timeout)
+            ->retry($config->retryTimes, $config->retrySleep);
     }
 
-    /**
-     * Create a Pay-in (collect money from a customer).
-     */
-    public function payIn(array $payload): Response
+    public function post(PawaPayEndpoint $endpoint, array $data = [])
     {
-        return $this->request(
-            'POST',
-            '/payins',
-            $this->withReference($payload)
+        return $this->httpClient->post(
+            $this->buildUrl($endpoint),
+            $data
         );
     }
 
-    /**
-     * Create a Pay-out (send money to a customer).
-     */
-    public function payOut(array $payload): Response
+    public function get(PawaPayEndpoint $endpoint, array $query = [])
     {
-        return $this->request(
-            'POST',
-            '/payouts',
-            $this->withReference($payload)
+        return $this->httpClient->get(
+            $this->buildUrl($endpoint),
+            $query
         );
     }
 
-    /**
-     * Verify transaction status.
-     */
-    public function verify(string $transactionId): Response
+    public function put(PawaPayEndpoint $endpoint, array $data = [])
     {
-        return $this->request(
-            'GET',
-            "/transactions/{$transactionId}"
+        return $this->httpClient->put(
+            $this->buildUrl($endpoint),
+            $data
         );
     }
 
-    /**
-     * Perform HTTP request.
-     */
-    protected function request(
-        string $method,
-        string $uri,
-        array $data = []
-    ): Response {
-        return Http::timeout($this->timeout)
-            ->withToken($this->apiKey)
-            ->acceptJson()
-            ->asJson()
-            ->{$method}($this->baseUrl . $uri, $data)
-            ->throw();
+    public function patch(PawaPayEndpoint $endpoint, array $data = [])
+    {
+        return $this->httpClient->patch(
+            $this->buildUrl($endpoint),
+            $data
+        );
     }
 
-    /**
-     * Add unique reference if missing.
-     */
-    protected function withReference(array $payload): array
+    public function delete(PawaPayEndpoint $endpoint)
     {
-        if (!isset($payload['reference'])) {
-            $payload['reference'] = (string) Str::uuid();
-        }
+        return $this->httpClient->delete($this->buildUrl($endpoint));
+    }
 
-        return $payload;
+    private function buildUrl(PawaPayEndpoint $endpoint): string
+    {
+        return rtrim($this->baseUrl, '/') . '/' . ltrim($endpoint->value, '/');
     }
 }

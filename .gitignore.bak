@@ -1,47 +1,49 @@
+# ====================================================
 # Laravel / PHP standard
+# ====================================================
 /vendor/
+/composer.lock
+/node_modules/
 .env
 .env.*.backup
 .phpunit.result.cache
 .phpunit.cache
-.phpunit.cache/
 
-# IDE / OS files
-.idea/
-.vscode/
-*.swp
-.DS_Store
-Thumbs.db
-
-# Composer
-composer.lock
-
-# Laravel specific
+# Storage & bootstrap
 /storage/*.key
 /storage/framework/cache/data/*
 /storage/logs/*.log
 /storage/app/public/*
 /bootstrap/cache/*.php
 
-# PHPUnit & test caches
-.phpunit.result.cache
-.phpunit.cache
+# ====================================================
+# IDE / OS files
+# ====================================================
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
 
-# Misc
-erl_crash.dump
+# ====================================================
+# Generated reports / test artifacts
+# ====================================================
+CHANGED_FILES.md
+FILES_CHECKLIST.md
+pint-test.md
+rector.md
+phpstan.md
+psalm.md
 diff.txt
 all.txt
-*.php.bak
 
-# Ignore build artifacts
-#art/
-#Makefile
-#examples/
-#prompts/
-
-# Optional: ignore Rector generated cache
-rector.php.cache
+# Makefile / build backups
+*.bak
 calendar.sh
+rector.php.cache
+
+# Crash dumps
 erl_crash.dump
 
-# Routes, config, src, tests, etc. are versioned, so no need to ignore
+# Prompts / AI files
+prompts/
