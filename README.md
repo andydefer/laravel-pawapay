@@ -455,6 +455,42 @@ initiateDeposit(InitiateDepositRequestData $request): InitiateDepositResponseDat
 // 4. Status Checking
 checkDepositStatus(string $depositId): CheckDepositStatusWrapperData
 ```
+# 🎨 TypeScript Type Generation
+
+## Generate TypeScript Definitions
+
+```bash
+php artisan pawapay:generate-types
+```
+
+### What It Does
+Creates TypeScript files in `resources/js/pawapay/`:
+- `enums.ts` - All Pawapay enums
+- `types.ts` - All interfaces
+- `index.ts` - Main exports with utility functions
+
+### Usage Example
+```typescript
+import {
+  SupportedProvider,
+  Currency,
+  TransactionStatus,
+  isTransactionFinal
+} from '@/js/pawapay';
+
+const provider: SupportedProvider = SupportedProvider.MTN_MOMO_ZMB;
+const currency: Currency = Currency.ZMW;
+const status: TransactionStatus = TransactionStatus.COMPLETED;
+
+if (isTransactionFinal(status)) {
+  console.log('Payment completed');
+}
+```
+
+### Force Regeneration
+```bash
+php artisan pawapay:generate-types --force
+```
 
 ## 🔧 Advanced Usage
 
