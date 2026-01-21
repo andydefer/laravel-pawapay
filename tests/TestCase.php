@@ -29,27 +29,6 @@ abstract class TestCase extends OrchestraTestCase
         $this->loadTestMigrations();
         $this->configureMemoryCache();
         $this->configurePawapayForTests();
-
-        /*  $uuid = Str::uuid();
-        $requestData = new PaymentPageRequestData(
-            depositId: (string) $uuid,
-            returnUrl: 'https://merchant.com/paymentProcessed',
-            customerMessage: 'Note of 4 to 22 charsddddddddddddddddddddddddddddddddddd',
-            amountDetails: new AmountDetailsData(
-                amount: '15',
-                currency: Currency::USD
-            ),
-            phoneNumber: '243827833329',
-            language: Language::FR,
-            country: SupportedCountry::COD,
-            reason: 'Ticket to festival',
-            metadata: [],
-
-        );
-
-        $response = Pawapay::createPaymentPage($requestData);
-
-        dd($response); */
     }
 
     /**

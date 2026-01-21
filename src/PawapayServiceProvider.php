@@ -6,10 +6,12 @@ namespace Pawapay;
 
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
+use Pawapay\Commands\GenerateTypesCommand;
 use Pawapay\Contracts\PawapayClientInterface;
 use Pawapay\Data\PawapayConfigData;
 use Pawapay\Services\PawapayClient;
 use Pawapay\Services\PawapayService;
+use Pawapay\Services\TypesGeneratorService;
 
 class PawapayServiceProvider extends ServiceProvider
 {
@@ -51,10 +53,15 @@ class PawapayServiceProvider extends ServiceProvider
             );
         });
 
+        // Register types generator service
+        $this->app->singleton(TypesGeneratorService::class, function (): TypesGeneratorService {
+            return new TypesGeneratorService();
+        });
 
         // Create aliases for convenient access
         $this->app->alias(PawapayService::class, 'pawapay');
         $this->app->alias(PawapayClientInterface::class, 'pawapay.client');
+        $this->app->alias(TypesGeneratorService::class, 'pawapay.types-generator');
     }
 
     /**
@@ -63,9 +70,17 @@ class PawapayServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if ($this->app->runningInConsole()) {
+            $this->commands([
+                GenerateTypesCommand::class,
+            ]);
+
             $this->publishes([
                 __DIR__ . '/../config/pawapay.php' => config_path('pawapay.php'),
             ], 'pawapay-config');
+
+            $this->publishes([
+                __DIR__ . '/../stubs/typescript' => resource_path('js/pawapay'),
+            ], 'pawapay-types');
         }
     }
 
@@ -77,9 +92,10 @@ class PawapayServiceProvider extends ServiceProvider
         return [
             PawapayClientInterface::class,
             PawapayService::class,
+            TypesGeneratorService::class,
             'pawapay',
-            'pawapay.payment-page',
-            'pawapay.client'
+            'pawapay.client',
+            'pawapay.types-generator',
         ];
     }
 }

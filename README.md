@@ -9,20 +9,6 @@
 
 **Laravel PawaPay SDK** is a comprehensive, type-safe Laravel package for integrating PawaPay Mobile Money payments across 21 African markets. Built with modern PHP practices, it provides a seamless interface for pay-ins, pay-outs, provider prediction, and webhook handling.
 
-## 📦 Features
-
-- ✅ **Full PawaPay API Coverage** - All endpoints implemented
-- ✅ **21 African Countries** - Complete market support
-- ✅ **Type-Safe DTOs** - Built with Spatie Laravel Data
-- ✅ **Comprehensive Error Handling** - Detailed failure codes
-- ✅ **Mobile Money Provider Prediction** - Automatic provider detection
-- ✅ **Payment Page Generation** - Hosted payment pages
-- ✅ **Direct Deposit Initiation** - Programmatic payments
-- ✅ **Deposit Status Tracking** - Real-time status monitoring
-- ✅ **Sandbox & Production** - Easy environment switching
-- ✅ **Extensive Testing** - Integration tests with real API
-- ✅ **Laravel Facade** - Clean, expressive syntax
-
 ## 🚀 Installation
 
 ### 1. Install via Composer
