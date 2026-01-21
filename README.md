@@ -78,38 +78,71 @@ Utilisez le SDK directement dans vos contrôleurs ou services :
 use Pawapay\Facades\Pawapay;
 
 // Prédire le fournisseur mobile money
-$provider = Pawapay::predictProvider('+260763456789');
+$response = Pawapay::predictProvider('+260763456789');
+// Retourne: PredictProviderSuccessResponse ou PredictProviderFailureResponse
 
 // Créer une page de paiement
-$paymentPage = Pawapay::createPaymentPage([
-    'depositId' => 'order_123',
-    'amount' => '100',
-    'currency' => 'ZMW',
-    'phoneNumber' => '+260763456789',
-    'country' => 'ZMB'
-]);
+$requestData = PaymentPageRequestData::fromArray([...]);
+$response = Pawapay::createPaymentPage($requestData);
+// Retourne: PaymentPageSuccessResponseData ou PaymentPageErrorResponseData
+
+// Initier un dépôt direct
+$requestData = InitiateDepositRequestData::fromArray([...]);
+$response = Pawapay::initiateDeposit($requestData);
+// Retourne: InitiateDepositResponseData
 
 // Vérifier le statut du dépôt
-$status = Pawapay::checkDepositStatus('order_123');
+$response = Pawapay::checkDepositStatus('deposit_uuid');
+// Retourne: CheckDepositStatusWrapperData
 ```
 
 ### Option 2 : API REST Intégrée (Prête à l'Emploi)
 
-Le package inclut une API REST complète disponible automatiquement :
+Le package inclut une API REST complète disponible automatiquement via les routes :
+
+```
+POST   /api/pawapay/predict-provider
+POST   /api/pawapay/payment-page
+POST   /api/pawapay/deposits
+GET    /api/pawapay/deposits/{depositId}
+```
 
 #### Points de Terminaison API Disponibles :
 
-| Méthode | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/pawapay/predict-provider` | Prédire le fournisseur mobile money depuis un numéro de téléphone |
-| `POST` | `/api/pawapay/payment-page` | Créer une page de paiement hébergée |
-| `POST` | `/api/pawapay/deposits` | Initier un dépôt direct (sans redirection) |
-| `GET` | `/api/pawapay/deposits/{depositId}` | Vérifier le statut d'un dépôt |
+| Méthode | Endpoint | Type de Retour | Description |
+|--------|----------|----------------|-------------|
+| `POST` | `/api/pawapay/predict-provider` | `PredictProviderSuccessResponse` ou `PredictProviderFailureResponse` | Prédire le fournisseur mobile money depuis un numéro de téléphone |
+| `POST` | `/api/pawapay/payment-page` | `PaymentPageSuccessResponseData` ou `PaymentPageErrorResponseData` | Créer une page de paiement hébergée |
+| `POST` | `/api/pawapay/deposits` | `InitiateDepositResponseData` | Initier un dépôt direct (sans redirection) |
+| `GET` | `/api/pawapay/deposits/{depositId}` | `CheckDepositStatusWrapperData` | Vérifier le statut d'un dépôt |
+
+#### Structure des Réponses API :
+
+L'API retourne directement les objets DTO sans wrapper supplémentaire :
+
+**Réponse de succès (exemple pour predict-provider) :**
+```json
+{
+  "country": "ZMB",
+  "provider": "MTN_MOMO_ZMB",
+  "phoneNumber": "260763456789"
+}
+```
+
+**Réponse d'erreur (exemple pour predict-provider) :**
+```json
+{
+  "failureReason": {
+    "failureCode": "INVALID_PHONE_NUMBER",
+    "failureMessage": "Invalid phone number"
+  }
+}
+```
 
 #### Exemples d'Utilisation de l'API :
 
 ```javascript
-// Utilisation de l'API fetch en JavaScript
+// Utilisation de l'API fetch en JavaScript - Prédiction de fournisseur
 const response = await fetch('/api/pawapay/predict-provider', {
     method: 'POST',
     headers: {
@@ -122,29 +155,70 @@ const response = await fetch('/api/pawapay/predict-provider', {
 });
 
 const data = await response.json();
-console.log(data.success); // true ou false
-console.log(data.data); // Données de réponse
+
+// Vérifiez si c'est une réponse de succès
+if (data.country && data.provider) {
+    console.log('Pays:', data.country); // "ZMB"
+    console.log('Fournisseur:', data.provider); // "MTN_MOMO_ZMB"
+    console.log('Téléphone:', data.phoneNumber); // "260763456789"
+} else if (data.failureReason) {
+    console.log('Erreur:', data.failureReason.failureMessage);
+    console.log('Code:', data.failureReason.failureCode);
+}
 ```
 
 ```bash
-# Utilisation de cURL
-curl -X POST "http://votre-app.test/api/pawapay/predict-provider" \
+# Utilisation de cURL - Création de page de paiement
+curl -X POST "http://votre-app.test/api/pawapay/payment-page" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
-  -d '{"phoneNumber": "+260763456789"}'
+  -d '{
+    "depositId": "order_123",
+    "returnUrl": "https://votre-boutique.com/payment/callback",
+    "customerMessage": "Paiement pour la Commande #12345",
+    "amountDetails": {
+      "amount": "150.00",
+      "currency": "ZMW"
+    },
+    "phoneNumber": "260763456789",
+    "language": "EN",
+    "country": "ZMB",
+    "reason": "Achat en Ligne",
+    "metadata": [
+      {"orderId": "ORD-123"},
+      {"customerId": "cust-456"}
+    ]
+  }'
 ```
 
 #### Format des Requêtes/Réponses de l'API :
 
-**Prédiction de Fournisseur :**
+**1. Prédiction de Fournisseur :**
 ```json
+// Requête
 {
   "phoneNumber": "+260763456789"
 }
+
+// Réponse de succès
+{
+  "country": "ZMB",
+  "provider": "MTN_MOMO_ZMB",
+  "phoneNumber": "260763456789"
+}
+
+// Réponse d'erreur
+{
+  "failureReason": {
+    "failureCode": "INVALID_PHONE_NUMBER",
+    "failureMessage": "Invalid phone number"
+  }
+}
 ```
 
-**Création de Page de Paiement :**
+**2. Création de Page de Paiement :**
 ```json
+// Requête
 {
   "depositId": "order_123",
   "returnUrl": "https://votre-boutique.com/payment/callback",
@@ -162,24 +236,86 @@ curl -X POST "http://votre-app.test/api/pawapay/predict-provider" \
     {"customerId": "cust-456"}
   ]
 }
-```
 
-**Format de Réponse de l'API (Tous les Endpoints) :**
-```json
+// Réponse de succès
 {
-  "success": true,
-  "data": {
-    // Les données de réponse varient selon l'endpoint
+  "redirectUrl": "https://sandbox.pawapay.io/payment/abc123"
+}
+
+// Réponse d'erreur
+{
+  "depositId": "order_123",
+  "status": "REJECTED",
+  "failureReason": {
+    "failureCode": "INVALID_AMOUNT",
+    "failureMessage": "Amount is invalid"
   }
 }
 ```
 
-**Réponse d'Erreur :**
+**3. Initiation de Dépôt Direct :**
 ```json
+// Requête
 {
-  "success": false,
-  "error": "Description de l'erreur",
-  "message": "Message d'erreur détaillé"
+  "depositId": "deposit_123",
+  "payer": {
+    "type": "MMO",
+    "accountDetails": {
+      "phoneNumber": "+260763456789",
+      "provider": "MTN_MOMO_ZMB"
+    }
+  },
+  "amount": "100.00",
+  "currency": "ZMW",
+  "clientReferenceId": "INV-123456",
+  "customerMessage": "Paiement pour services",
+  "metadata": [
+    {"orderId": "ORD-123"},
+    {"customerId": "cust-456"}
+  ]
+}
+
+// Réponse
+{
+  "depositId": "deposit_123",
+  "status": "ACCEPTED",
+  "created": "2024-01-15T10:30:00Z",
+  "failureReason": null
+}
+```
+
+**4. Vérification de Statut de Dépôt :**
+```json
+// Requête (via paramètre de route)
+GET /api/pawapay/deposits/deposit_123
+
+// Réponse (dépôt trouvé)
+{
+  "status": "FOUND",
+  "data": {
+    "depositId": "deposit_123",
+    "status": "COMPLETED",
+    "amount": "100.00",
+    "currency": "ZMW",
+    "country": "ZMB",
+    "payer": {
+      "type": "MMO",
+      "accountDetails": {
+        "phoneNumber": "260763456789",
+        "provider": "MTN_MOMO_ZMB"
+      }
+    },
+    "customerMessage": "Paiement pour services",
+    "clientReferenceId": "INV-123456",
+    "providerTransactionId": "txn_789",
+    "created": "2024-01-15T10:30:00Z"
+  }
+}
+
+// Réponse (dépôt non trouvé)
+{
+  "status": "NOT_FOUND",
+  "data": null
 }
 ```
 
@@ -223,7 +359,7 @@ use Pawapay\Facades\Pawapay;
 
 $response = Pawapay::predictProvider('+260763456789');
 
-if ($response->isSuccess()) {
+if ($response instanceof \Pawapay\Data\Responses\PredictProviderSuccessResponse) {
     echo "Pays : " . $response->country->value; // ZMB
     echo "Fournisseur : " . $response->provider->value; // MTN_MOMO_ZMB
     echo "Téléphone : " . $response->phoneNumber; // 260763456789
@@ -264,7 +400,7 @@ $requestData = PaymentPageRequestData::fromArray([
 
 $response = Pawapay::createPaymentPage($requestData);
 
-if ($response->isSuccess()) {
+if ($response instanceof \Pawapay\Data\PaymentPage\PaymentPageSuccessResponseData) {
     // Redirigez le client vers la page de paiement
     return redirect($response->redirectUrl);
 } else {
@@ -330,10 +466,10 @@ Surveillez le statut des transactions en temps réel :
 use Pawapay\Facades\Pawapay;
 
 $depositId = 'votre_depot_uuid';
-$status = Pawapay::checkDepositStatus($depositId);
+$response = Pawapay::checkDepositStatus($depositId);
 
-if ($status->isFound()) {
-    $deposit = $status->data;
+if ($response->isFound()) {
+    $deposit = $response->data;
 
     echo "ID de dépôt : " . $deposit->depositId;
     echo "Montant : " . $deposit->amount . " " . $deposit->currency->value;
@@ -494,14 +630,15 @@ use Pawapay\Data\PaymentPage\PaymentPageSuccessResponseData;
 use Pawapay\Data\PaymentPage\PaymentPageErrorResponseData;
 use Pawapay\Data\Deposit\InitiateDepositResponseData;
 use Pawapay\Data\Responses\CheckDepositStatusWrapperData;
+use Pawapay\Data\Responses\PredictProviderSuccessResponse;
+use Pawapay\Data\Responses\PredictProviderFailureResponse;
 
 // Toutes les réponses ont des méthodes d'aide
-$response->isSuccess();
-$response->isFailure();
 $response->isAccepted();
 $response->isRejected();
 $response->isFound();
 $response->isNotFound();
+$response->isSuccess(); // Pour PredictProviderResponseData
 ```
 
 ### Méthodes du Service
@@ -614,7 +751,7 @@ use Pawapay\Exceptions\PawapayApiException;
 try {
     $response = Pawapay::predictProvider($phoneNumber);
 
-    if ($response->isFailure()) {
+    if ($response instanceof \Pawapay\Data\Responses\PredictProviderFailureResponse) {
         // L'API a retourné une erreur métier
         $errorCode = $response->failureReason->failureCode;
         $errorMessage = $response->failureReason->failureMessage;
@@ -716,8 +853,9 @@ async function processPayment(phoneNumber, amount, orderId) {
 
         const providerData = await providerResponse.json();
 
-        if (!providerData.success) {
-            throw new Error('Impossible de détecter le fournisseur mobile money');
+        // Vérifiez si c'est une réponse de succès
+        if (!providerData.country || !providerData.provider) {
+            throw new Error(providerData.failureReason?.failureMessage || 'Impossible de détecter le fournisseur');
         }
 
         // Étape 2 : Créer la page de paiement
@@ -730,11 +868,11 @@ async function processPayment(phoneNumber, amount, orderId) {
                 customerMessage: `Paiement pour la Commande #${orderId}`,
                 amountDetails: {
                     amount: amount.toString(),
-                    currency: providerData.data.country === 'ZMB' ? 'ZMW' : 'XOF'
+                    currency: providerData.country === 'ZMB' ? 'ZMW' : 'XOF'
                 },
-                phoneNumber: providerData.data.phoneNumber,
+                phoneNumber: providerData.phoneNumber,
                 language: navigator.language.startsWith('fr') ? 'FR' : 'EN',
-                country: providerData.data.country,
+                country: providerData.country,
                 reason: 'Achat en ligne',
                 metadata: [
                     { orderId },
@@ -745,11 +883,12 @@ async function processPayment(phoneNumber, amount, orderId) {
 
         const paymentData = await paymentResponse.json();
 
-        if (paymentData.success) {
+        // Vérifiez si c'est une réponse de succès
+        if (paymentData.redirectUrl) {
             // Redirigez vers la page de paiement PawaPay
-            window.location.href = paymentData.data.redirectUrl;
+            window.location.href = paymentData.redirectUrl;
         } else {
-            throw new Error(paymentData.error || 'Échec de la création du paiement');
+            throw new Error(paymentData.failureReason?.failureMessage || 'Échec de la création du paiement');
         }
 
     } catch (error) {
@@ -951,7 +1090,7 @@ public function makePayment($data)
     $requestData = PaymentPageRequestData::fromArray($data);
     $response = Pawapay::createPaymentPage($requestData);
 
-    if ($response->isFailure()) {
+    if ($response instanceof \Pawapay\Data\PaymentPage\PaymentPageErrorResponseData) {
         throw new Exception('Échec du paiement : ' . $response->failureReason->failureMessage);
     }
 
