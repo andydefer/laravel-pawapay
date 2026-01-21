@@ -7,6 +7,7 @@ namespace Pawapay;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 use Pawapay\Commands\GenerateTypesCommand;
+use Pawapay\Commands\InstallPawapayCommand;
 use Pawapay\Contracts\PawapayClientInterface;
 use Pawapay\Data\PawapayConfigData;
 use Pawapay\Services\PawapayClient;
@@ -69,9 +70,36 @@ class PawapayServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->registerRoutes();
+        $this->registerPublishing();
+    }
+
+    /**
+     * Register the package routes.
+     */
+    protected function registerRoutes(): void
+    {
+        // Si les routes personnalisées existent (publiées par l'utilisateur), on les charge
+        $customRoutesPath = base_path('routes/pawapay.php');
+
+        if (file_exists($customRoutesPath)) {
+            $this->loadRoutesFrom($customRoutesPath);
+            return;
+        }
+
+        // Sinon, on charge les routes par défaut du package
+        $this->loadRoutesFrom(__DIR__ . '/routes/pawapay.php');
+    }
+
+    /**
+     * Register the package's publishable resources.
+     */
+    protected function registerPublishing(): void
+    {
         if ($this->app->runningInConsole()) {
             $this->commands([
                 GenerateTypesCommand::class,
+                InstallPawapayCommand::class,
             ]);
 
             $this->publishes([
@@ -79,8 +107,16 @@ class PawapayServiceProvider extends ServiceProvider
             ], 'pawapay-config');
 
             $this->publishes([
-                __DIR__ . '/../stubs/typescript' => resource_path('js/pawapay'),
+                __DIR__ . '/stubs/typescript' => resource_path('js/pawapay'),
             ], 'pawapay-types');
+
+            $this->publishes([
+                __DIR__ . '/stubs/controllers/PawapayController.stub' => app_path('Http/Controllers/Api/PawapayController.php'),
+            ], 'pawapay-controller');
+
+            $this->publishes([
+                __DIR__ . '/stubs/routes/pawapay-routes.stub' => base_path('routes/pawapay.php'),
+            ], 'pawapay-routes');
         }
     }
 
