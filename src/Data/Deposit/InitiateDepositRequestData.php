@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pawapay\Data\Deposit;
 
+use Pawapay\Data\Responses\PayerData;
 use Pawapay\Enums\Currency;
 use Pawapay\Enums\SupportedProvider;
 use Spatie\LaravelData\Data;
@@ -50,51 +51,6 @@ class InitiateDepositRequestData extends Data
             clientReferenceId: $data['clientReferenceId'] ?? Optional::create(),
             customerMessage: $data['customerMessage'] ?? Optional::create(),
             metadata: $metadata,
-        );
-    }
-}
-
-class PayerData extends Data
-{
-    public function __construct(
-        public string $type = 'MMO',
-        public ?AccountDetailsData $accountDetails = null,
-    ) {}
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    public static function fromArray(array $data): self
-    {
-        return new self(
-            type: $data['type'] ?? 'MMO',
-            accountDetails: AccountDetailsData::fromArray($data['accountDetails']),
-        );
-    }
-}
-
-class AccountDetailsData extends Data
-{
-    public function __construct(
-        public string $phoneNumber,
-
-        #[WithCast(EnumCast::class)]
-        public SupportedProvider $provider,
-    ) {}
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    public static function fromArray(array $data): self
-    {
-        if (isset($data['phoneNumber'])) {
-            // Supprime le + au début si présent
-            $data['phoneNumber'] = ltrim($data['phoneNumber'], '+');
-        }
-
-        return new self(
-            phoneNumber: $data['phoneNumber'],
-            provider: SupportedProvider::from($data['provider']),
         );
     }
 }

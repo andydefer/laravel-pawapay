@@ -8,79 +8,79 @@
 ![Mobile Money](https://img.shields.io/badge/Mobile%20Money-Africa-brightgreen)
 ![API Routes](https://img.shields.io/badge/API%20Routes-automatic-blue)
 
-**Laravel PawaPay SDK** is a comprehensive, type-safe Laravel package for integrating PawaPay Mobile Money payments across 21 African markets. Built with modern PHP practices, it provides a seamless interface for pay-ins, pay-outs, provider prediction, webhook handling, and includes a complete REST API out of the box.
+**Laravel PawaPay SDK** est un package Laravel complet et type-safe pour intégrer les paiements mobile money PawaPay dans 21 marchés africains. Construit avec des pratiques PHP modernes, il fournit une interface fluide pour les pay-ins, pay-outs, la prédiction de fournisseurs, la gestion des webhooks et inclut une API REST complète prête à l'emploi.
 
 ## 🚀 Installation
 
-### 1. Install via Composer
+### 1. Installation via Composer
 
 ```bash
 composer require andydefer/laravel-pawapay
 ```
 
-### 2. Quick Installation (Recommended)
+### 2. Installation Rapide (Recommandée)
 
-Use the installation command to publish all resources at once:
+Utilisez la commande d'installation pour publier toutes les ressources en une fois :
 
 ```bash
-# Install everything in one command
+# Installez tout en une seule commande
 php artisan pawapay:install
 
-# Force installation (overwrites existing files)
+# Installation forcée (écrase les fichiers existants)
 php artisan pawapay:install --force
 ```
 
-### 3. Manual Installation (Optional)
+### 3. Installation Manuelle (Optionnel)
 
-If you prefer manual control, publish specific components:
+Si vous préférez un contrôle manuel, publiez des composants spécifiques :
 
 ```bash
-# Publish configuration only
+# Publier uniquement la configuration
 php artisan vendor:publish --provider="Pawapay\\PawapayServiceProvider" --tag="pawapay-config"
 
-# Publish TypeScript type definitions
+# Publier les définitions de types TypeScript
 php artisan vendor:publish --provider="Pawapay\\PawapayServiceProvider" --tag="pawapay-types"
 
-# Publish API controller
+# Publier le contrôleur API
 php artisan vendor:publish --provider="Pawapay\\PawapayServiceProvider" --tag="pawapay-controller"
 
-# Publish custom routes (optional - routes work automatically)
+# Publier les routes personnalisées (optionnel - les routes fonctionnent automatiquement)
 php artisan vendor:publish --provider="Pawapay\\PawapayServiceProvider" --tag="pawapay-routes"
 
-# Generate TypeScript definitions
+# Générer les définitions TypeScript
 php artisan pawapay:generate-types
 ```
 
-### 4. Configure Environment Variables
+### 4. Configuration des Variables d'Environnement
 
-Add to your `.env` file:
+Ajoutez à votre fichier `.env` :
 
 ```env
-# Environment (sandbox/production)
+# Environnement (sandbox/production)
 PAWAPAY_ENVIRONMENT=sandbox
 
-# API Token from PawaPay
-PAWAPAY_API_TOKEN=your_api_token_here
+# Token API de PawaPay
+PAWAPAY_API_TOKEN=votre_token_api_ici
 
-# Optional: Customize timeouts and retries
+# Optionnel : Personnaliser les timeouts et tentatives
 PAWAPAY_TIMEOUT=30
 PAWAPAY_RETRY_TIMES=3
 PAWAPAY_RETRY_SLEEP=100
 ```
 
-## 📡 Two Ways to Use the Package
+## 📡 Deux Manières d'Utiliser le Package
 
-### Option 1: Direct SDK Usage (Recommended for Custom Integrations)
+### Option 1 : Utilisation Directe du SDK (Recommandé pour les Intégrations Personnalisées)
 
-Use the SDK directly in your controllers or services:
+Utilisez le SDK directement dans vos contrôleurs ou services :
 
 ```php
 use Pawapay\Facades\Pawapay;
 
-// Predict mobile money provider
+// Prédire le fournisseur mobile money
 $provider = Pawapay::predictProvider('+260763456789');
 
-// Create payment page
+// Créer une page de paiement
 $paymentPage = Pawapay::createPaymentPage([
     'depositId' => 'order_123',
     'amount' => '100',
@@ -89,27 +89,27 @@ $paymentPage = Pawapay::createPaymentPage([
     'country' => 'ZMB'
 ]);
 
-// Check deposit status
+// Vérifier le statut du dépôt
 $status = Pawapay::checkDepositStatus('order_123');
 ```
 
-### Option 2: Built-in REST API (Ready-to-Use)
+### Option 2 : API REST Intégrée (Prête à l'Emploi)
 
-The package includes a complete REST API that's automatically available:
+Le package inclut une API REST complète disponible automatiquement :
 
-#### Available API Endpoints:
+#### Points de Terminaison API Disponibles :
 
-| Method | Endpoint | Description |
+| Méthode | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/pawapay/predict-provider` | Predict mobile money provider from phone number |
-| `POST` | `/api/pawapay/payment-page` | Create a hosted payment page |
-| `POST` | `/api/pawapay/deposits` | Initiate direct deposit (no redirect) |
-| `GET` | `/api/pawapay/deposits/{depositId}` | Check deposit status |
+| `POST` | `/api/pawapay/predict-provider` | Prédire le fournisseur mobile money depuis un numéro de téléphone |
+| `POST` | `/api/pawapay/payment-page` | Créer une page de paiement hébergée |
+| `POST` | `/api/pawapay/deposits` | Initier un dépôt direct (sans redirection) |
+| `GET` | `/api/pawapay/deposits/{depositId}` | Vérifier le statut d'un dépôt |
 
-#### API Usage Examples:
+#### Exemples d'Utilisation de l'API :
 
 ```javascript
-// Using fetch API in JavaScript
+// Utilisation de l'API fetch en JavaScript
 const response = await fetch('/api/pawapay/predict-provider', {
     method: 'POST',
     headers: {
@@ -122,33 +122,33 @@ const response = await fetch('/api/pawapay/predict-provider', {
 });
 
 const data = await response.json();
-console.log(data.success); // true or false
-console.log(data.data); // Response data
+console.log(data.success); // true ou false
+console.log(data.data); // Données de réponse
 ```
 
 ```bash
-# Using cURL
-curl -X POST "http://your-app.test/api/pawapay/predict-provider" \
+# Utilisation de cURL
+curl -X POST "http://votre-app.test/api/pawapay/predict-provider" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
   -d '{"phoneNumber": "+260763456789"}'
 ```
 
-#### API Request/Response Format:
+#### Format des Requêtes/Réponses de l'API :
 
-**Predict Provider:**
+**Prédiction de Fournisseur :**
 ```json
 {
   "phoneNumber": "+260763456789"
 }
 ```
 
-**Create Payment Page:**
+**Création de Page de Paiement :**
 ```json
 {
   "depositId": "order_123",
-  "returnUrl": "https://yourstore.com/payment/callback",
-  "customerMessage": "Payment for Order #12345",
+  "returnUrl": "https://votre-boutique.com/payment/callback",
+  "customerMessage": "Paiement pour la Commande #12345",
   "amountDetails": {
     "amount": "150.00",
     "currency": "ZMW"
@@ -156,7 +156,7 @@ curl -X POST "http://your-app.test/api/pawapay/predict-provider" \
   "phoneNumber": "260763456789",
   "language": "EN",
   "country": "ZMB",
-  "reason": "Online Purchase",
+  "reason": "Achat en Ligne",
   "metadata": [
     {"orderId": "ORD-123"},
     {"customerId": "cust-456"}
@@ -164,39 +164,39 @@ curl -X POST "http://your-app.test/api/pawapay/predict-provider" \
 }
 ```
 
-**API Response Format (All Endpoints):**
+**Format de Réponse de l'API (Tous les Endpoints) :**
 ```json
 {
   "success": true,
   "data": {
-    // Response data varies by endpoint
+    // Les données de réponse varient selon l'endpoint
   }
 }
 ```
 
-**Error Response:**
+**Réponse d'Erreur :**
 ```json
 {
   "success": false,
-  "error": "Error description",
-  "message": "Detailed error message"
+  "error": "Description de l'erreur",
+  "message": "Message d'erreur détaillé"
 }
 ```
 
-## 🌍 Supported Countries & Providers
+## 🌍 Pays et Fournisseurs Supportés
 
-PawaPay supports **21 African countries** with their respective mobile money providers:
+PawaPay supporte **21 pays africains** avec leurs fournisseurs mobile money respectifs :
 
-### Complete Country Coverage
+### Couverture Complète des Pays
 
-| Country | Code | Supported Providers | Currency |
+| Pays | Code | Fournisseurs Supportés | Devise |
 |---------|------|-------------------|----------|
-| **Benin** | `BEN` | MTN_MOMO_BEN, MOOV_BEN | XOF |
+| **Bénin** | `BEN` | MTN_MOMO_BEN, MOOV_BEN | XOF |
 | **Burkina Faso** | `BFA` | MOOV_BFA, ORANGE_BFA | XOF |
-| **Cameroon** | `CMR` | MTN_MOMO_CMR, ORANGE_CMR | XAF |
+| **Cameroun** | `CMR` | MTN_MOMO_CMR, ORANGE_CMR | XAF |
 | **Côte d'Ivoire** | `CIV` | MTN_MOMO_CIV, ORANGE_CIV, WAVE_CIV | XOF |
-| **DR Congo** | `COD` | VODACOM_MPESA_COD, AIRTEL_COD, ORANGE_COD | CDF, USD |
-| **Ethiopia** | `ETH` | MPESA_ETH | ETB |
+| **RDC** | `COD` | VODACOM_MPESA_COD, AIRTEL_COD, ORANGE_COD | CDF, USD |
+| **Éthiopie** | `ETH` | MPESA_ETH | ETB |
 | **Gabon** | `GAB` | AIRTEL_GAB | XAF |
 | **Ghana** | `GHA` | MTN_MOMO_GHA, AIRTELTIGO_GHA, VODAFONE_GHA | GHS |
 | **Kenya** | `KEN` | MPESA_KEN | KES |
@@ -204,19 +204,19 @@ PawaPay supports **21 African countries** with their respective mobile money pro
 | **Malawi** | `MWI` | AIRTEL_MWI, TNM_MWI | MWK |
 | **Mozambique** | `MOZ` | MOVITEL_MOZ, VODACOM_MOZ | MZN |
 | **Nigeria** | `NGA` | AIRTEL_NGA, MTN_MOMO_NGA | NGN |
-| **Republic of Congo** | `COG` | AIRTEL_COG, MTN_MOMO_COG | XAF |
+| **République du Congo** | `COG` | AIRTEL_COG, MTN_MOMO_COG | XAF |
 | **Rwanda** | `RWA` | AIRTEL_RWA, MTN_MOMO_RWA | RWF |
-| **Senegal** | `SEN` | FREE_SEN, ORANGE_SEN, WAVE_SEN | XOF |
+| **Sénégal** | `SEN` | FREE_SEN, ORANGE_SEN, WAVE_SEN | XOF |
 | **Sierra Leone** | `SLE` | ORANGE_SLE | SLE |
-| **Tanzania** | `TZA` | AIRTEL_TZA, VODACOM_TZA, TIGO_TZA, HALOTEL_TZA | TZS |
-| **Uganda** | `UGA` | AIRTEL_OAPI_UGA, MTN_MOMO_UGA | UGX |
-| **Zambia** | `ZMB` | AIRTEL_OAPI_ZMB, MTN_MOMO_ZMB, ZAMTEL_ZMB | ZMW |
+| **Tanzanie** | `TZA` | AIRTEL_TZA, VODACOM_TZA, TIGO_TZA, HALOTEL_TZA | TZS |
+| **Ouganda** | `UGA` | AIRTEL_OAPI_UGA, MTN_MOMO_UGA | UGX |
+| **Zambie** | `ZMB` | AIRTEL_OAPI_ZMB, MTN_MOMO_ZMB, ZAMTEL_ZMB | ZMW |
 
-## 💰 Core Features
+## 💰 Fonctionnalités Principales
 
-### 1. Mobile Money Provider Prediction
+### 1. Prédiction de Fournisseur Mobile Money
 
-Automatically detect the mobile money provider from a phone number:
+Détectez automatiquement le fournisseur mobile money à partir d'un numéro de téléphone :
 
 ```php
 use Pawapay\Facades\Pawapay;
@@ -224,17 +224,17 @@ use Pawapay\Facades\Pawapay;
 $response = Pawapay::predictProvider('+260763456789');
 
 if ($response->isSuccess()) {
-    echo "Country: " . $response->country->value; // ZMB
-    echo "Provider: " . $response->provider->value; // MTN_MOMO_ZMB
-    echo "Phone: " . $response->phoneNumber; // 260763456789
+    echo "Pays : " . $response->country->value; // ZMB
+    echo "Fournisseur : " . $response->provider->value; // MTN_MOMO_ZMB
+    echo "Téléphone : " . $response->phoneNumber; // 260763456789
 } else {
-    echo "Error: " . $response->failureReason->failureMessage;
+    echo "Erreur : " . $response->failureReason->failureMessage;
 }
 ```
 
-### 2. Payment Page Creation
+### 2. Création de Page de Paiement
 
-Create hosted payment pages for customers:
+Créez des pages de paiement hébergées pour les clients :
 
 ```php
 use Pawapay\Data\PaymentPage\PaymentPageRequestData;
@@ -245,8 +245,8 @@ use Pawapay\Facades\Pawapay;
 
 $requestData = PaymentPageRequestData::fromArray([
     'depositId' => (string) \Illuminate\Support\Str::uuid(),
-    'returnUrl' => 'https://yourstore.com/payment/complete',
-    'customerMessage' => 'Payment for Order #12345',
+    'returnUrl' => 'https://votre-boutique.com/payment/complete',
+    'customerMessage' => 'Paiement pour la Commande #12345',
     'amountDetails' => [
         'amount' => '150.00',
         'currency' => Currency::ZMW->value,
@@ -254,7 +254,7 @@ $requestData = PaymentPageRequestData::fromArray([
     'phoneNumber' => '260763456789',
     'language' => Language::EN->value,
     'country' => SupportedCountry::ZMB->value,
-    'reason' => 'Online Purchase - Electronics',
+    'reason' => 'Achat en ligne - Électronique',
     'metadata' => [
         ['orderId' => 'ORD-123456789'],
         ['customerId' => 'cust-789012'],
@@ -265,19 +265,19 @@ $requestData = PaymentPageRequestData::fromArray([
 $response = Pawapay::createPaymentPage($requestData);
 
 if ($response->isSuccess()) {
-    // Redirect customer to payment page
+    // Redirigez le client vers la page de paiement
     return redirect($response->redirectUrl);
 } else {
-    // Handle error
+    // Gérez l'erreur
     return back()->withErrors([
         'payment' => $response->failureReason->failureMessage
     ]);
 }
 ```
 
-### 3. Direct Deposit Initiation
+### 3. Initiation de Dépôt Direct
 
-Initiate deposits programmatically without redirecting users:
+Initiez des dépôts de manière programmatique sans rediriger les utilisateurs :
 
 ```php
 use Pawapay\Data\Deposit\InitiateDepositRequestData;
@@ -297,7 +297,7 @@ $requestData = InitiateDepositRequestData::fromArray([
     'amount' => '100.00',
     'currency' => Currency::ZMW->value,
     'clientReferenceId' => 'INV-123456',
-    'customerMessage' => 'Payment for services rendered',
+    'customerMessage' => 'Paiement pour services rendus',
     'metadata' => [
         ['orderId' => 'ORD-123456'],
         ['customerId' => 'customer@email.com'],
@@ -308,152 +308,152 @@ $requestData = InitiateDepositRequestData::fromArray([
 $response = Pawapay::initiateDeposit($requestData);
 
 if ($response->isAccepted()) {
-    // Deposit accepted for processing
-    echo "Deposit ID: " . $response->depositId;
-    echo "Status: " . $response->status->value; // ACCEPTED
-    echo "Created: " . $response->created;
+    // Dépôt accepté pour traitement
+    echo "ID de dépôt : " . $response->depositId;
+    echo "Statut : " . $response->status->value; // ACCEPTED
+    echo "Créé le : " . $response->created;
 } elseif ($response->isRejected()) {
-    // Deposit rejected
-    echo "Rejected: " . $response->failureReason->failureMessage;
-    echo "Error Code: " . $response->failureReason->failureCode->value;
+    // Dépôt rejeté
+    echo "Rejeté : " . $response->failureReason->failureMessage;
+    echo "Code d'erreur : " . $response->failureReason->failureCode->value;
 } elseif ($response->isDuplicateIgnored()) {
-    // Duplicate request (idempotent)
-    echo "Duplicate ignored for: " . $response->depositId;
+    // Requête dupliquée (idempotent)
+    echo "Duplication ignorée pour : " . $response->depositId;
 }
 ```
 
-### 4. Deposit Status Checking
+### 4. Vérification du Statut des Dépôts
 
-Monitor transaction status in real-time:
+Surveillez le statut des transactions en temps réel :
 
 ```php
 use Pawapay\Facades\Pawapay;
 
-$depositId = 'your_deposit_uuid';
+$depositId = 'votre_depot_uuid';
 $status = Pawapay::checkDepositStatus($depositId);
 
 if ($status->isFound()) {
     $deposit = $status->data;
 
-    echo "Deposit ID: " . $deposit->depositId;
-    echo "Amount: " . $deposit->amount . " " . $deposit->currency->value;
-    echo "Status: " . $deposit->status->value;
-    echo "Country: " . $deposit->country->value;
-    echo "Phone: " . $deposit->payer->accountDetails->phoneNumber;
-    echo "Provider: " . $deposit->payer->accountDetails->provider->value;
+    echo "ID de dépôt : " . $deposit->depositId;
+    echo "Montant : " . $deposit->amount . " " . $deposit->currency->value;
+    echo "Statut : " . $deposit->status->value;
+    echo "Pays : " . $deposit->country->value;
+    echo "Téléphone : " . $deposit->payer->accountDetails->phoneNumber;
+    echo "Fournisseur : " . $deposit->payer->accountDetails->provider->value;
 
-    // Check if transaction is complete
+    // Vérifiez si la transaction est terminée
     if ($deposit->isFinalStatus()) {
-        echo "Transaction completed";
+        echo "Transaction terminée";
     } elseif ($deposit->isProcessing()) {
-        echo "Transaction in progress";
+        echo "Transaction en cours";
     }
 
-    // Access metadata
+    // Accédez aux métadonnées
     if ($deposit->metadata) {
         foreach ($deposit->metadata as $meta) {
             print_r($meta);
         }
     }
 
-    // Check for failure reason
+    // Vérifiez la raison de l'échec
     if ($deposit->failureReason) {
-        echo "Failure: " . $deposit->failureReason->failureMessage;
-        echo "Code: " . $deposit->failureReason->failureCode->value;
+        echo "Échec : " . $deposit->failureReason->failureMessage;
+        echo "Code : " . $deposit->failureReason->failureCode->value;
     }
 } else {
-    echo "Deposit not found";
+    echo "Dépôt non trouvé";
 }
 ```
 
-## 📊 Complete API Reference
+## 📊 Référence API Complète
 
-### Enums
+### Énumérations (Enums)
 
-The package provides comprehensive enums for type safety:
+Le package fournit des énumérations complètes pour la sécurité des types :
 
-#### `SupportedCountry` (21 countries)
+#### `SupportedCountry` (21 pays)
 ```php
 use Pawapay\Enums\SupportedCountry;
 
 $country = SupportedCountry::ZMB;
 echo $country->value; // "ZMB"
-echo $country->name; // "Zambia"
+echo $country->name; // "Zambie"
 
-// Get all providers for a country
+// Obtenez tous les fournisseurs pour un pays
 $providers = SupportedCountry::ZMB->getProviders();
-// Returns: [SupportedProvider::MTN_MOMO_ZMB, ...]
+// Retourne : [SupportedProvider::MTN_MOMO_ZMB, ...]
 ```
 
-#### `SupportedProvider` (40+ providers)
+#### `SupportedProvider` (40+ fournisseurs)
 ```php
 use Pawapay\Enums\SupportedProvider;
 
 $provider = SupportedProvider::MTN_MOMO_ZMB;
 echo $provider->value; // "MTN_MOMO_ZMB"
 
-// Get country from provider
+// Obtenez le pays du fournisseur
 $country = $provider->getCountry();
 echo $country->value; // "ZMB"
 ```
 
-#### `Currency` (17 currencies)
+#### `Currency` (17 devises)
 ```php
 use Pawapay\Enums\Currency;
 
 $currency = Currency::ZMW;
 echo $currency->value; // "ZMW"
 
-// Commonly used:
-Currency::ZMW; // Zambian Kwacha
-Currency::KES; // Kenyan Shilling
-Currency::GHS; // Ghanaian Cedi
-Currency::NGN; // Nigerian Naira
-Currency::USD; // US Dollar (DR Congo)
+// Communément utilisées :
+Currency::ZMW; // Kwacha zambien
+Currency::KES; // Shilling kényan
+Currency::GHS; // Cédi ghanéen
+Currency::NGN; // Naira nigérian
+Currency::USD; // Dollar US (RDC)
 ```
 
 #### `TransactionStatus`
 ```php
 use Pawapay\Enums\TransactionStatus;
 
-// Initiation statuses
+// Statuts d'initiation
 TransactionStatus::ACCEPTED
 TransactionStatus::REJECTED
 TransactionStatus::DUPLICATE_IGNORED
 
-// Final statuses
+// Statuts finaux
 TransactionStatus::COMPLETED
 TransactionStatus::FAILED
 
-// Intermediate statuses
+// Statuts intermédiaires
 TransactionStatus::SUBMITTED
 TransactionStatus::ENQUEUED
 TransactionStatus::PROCESSING
 TransactionStatus::IN_RECONCILIATION
 
-// Search statuses
+// Statuts de recherche
 TransactionStatus::FOUND
 TransactionStatus::NOT_FOUND
 ```
 
-#### `FailureCode` (27 detailed codes)
+#### `FailureCode` (27 codes détaillés)
 ```php
 use Pawapay\Enums\FailureCode;
 
-// Technical errors
+// Erreurs techniques
 FailureCode::NO_AUTHENTICATION
 FailureCode::INVALID_INPUT
 FailureCode::MISSING_PARAMETER
 FailureCode::INVALID_AMOUNT
 FailureCode::INVALID_PHONE_NUMBER
 
-// Transaction errors
+// Erreurs de transaction
 FailureCode::PAYMENT_NOT_APPROVED
 FailureCode::INSUFFICIENT_BALANCE
 FailureCode::PAYER_NOT_FOUND
 FailureCode::MANUALLY_CANCELLED
 
-// Get HTTP status code
+// Obtenez le code de statut HTTP
 $code = FailureCode::INVALID_INPUT;
 echo $code->httpStatusCode(); // 400
 ```
@@ -462,40 +462,40 @@ echo $code->httpStatusCode(); // 400
 ```php
 use Pawapay\Enums\Language;
 
-Language::EN; // English
-Language::FR; // French
+Language::EN; // Anglais
+Language::FR; // Français
 ```
 
 ### Data Transfer Objects (DTOs)
 
-All API interactions use strongly-typed DTOs:
+Toutes les interactions API utilisent des DTOs fortement typés :
 
-#### Request DTOs
+#### DTOs de Requête
 ```php
 use Pawapay\Data\PaymentPage\PaymentPageRequestData;
 use Pawapay\Data\Deposit\InitiateDepositRequestData;
 
-// From array
+// Depuis un tableau
 $paymentRequest = PaymentPageRequestData::fromArray($data);
 
-// From constructor (type-safe)
+// Depuis le constructeur (type-safe)
 $depositRequest = new InitiateDepositRequestData(
     depositId: 'uuid',
     payer: $payerData,
     amount: '100.00',
     currency: Currency::ZMW,
-    // ... other parameters
+    // ... autres paramètres
 );
 ```
 
-#### Response DTOs
+#### DTOs de Réponse
 ```php
 use Pawapay\Data\PaymentPage\PaymentPageSuccessResponseData;
 use Pawapay\Data\PaymentPage\PaymentPageErrorResponseData;
 use Pawapay\Data\Deposit\InitiateDepositResponseData;
 use Pawapay\Data\Responses\CheckDepositStatusWrapperData;
 
-// All responses have helper methods
+// Toutes les réponses ont des méthodes d'aide
 $response->isSuccess();
 $response->isFailure();
 $response->isAccepted();
@@ -504,39 +504,39 @@ $response->isFound();
 $response->isNotFound();
 ```
 
-### Service Methods
+### Méthodes du Service
 
-#### `PawapayService` Class
+#### Classe `PawapayService`
 
 ```php
-// 1. Provider Prediction
+// 1. Prédiction de Fournisseur
 predictProvider(string $phoneNumber): PredictProviderSuccessResponse|PredictProviderFailureResponse
 
-// 2. Payment Pages
+// 2. Pages de Paiement
 createPaymentPage(PaymentPageRequestData $request): PaymentPageSuccessResponseData|PaymentPageErrorResponseData
 
-// 3. Direct Deposits
+// 3. Dépôts Directs
 initiateDeposit(InitiateDepositRequestData $request): InitiateDepositResponseData
 
-// 4. Status Checking
+// 4. Vérification de Statut
 checkDepositStatus(string $depositId): CheckDepositStatusWrapperData
 ```
 
-## 🎨 TypeScript Type Generation
+## 🎨 Génération de Types TypeScript
 
-### Generate TypeScript Definitions
+### Générer les Définitions TypeScript
 
 ```bash
 php artisan pawapay:generate-types
 ```
 
-#### What It Does
-Creates TypeScript files in `resources/js/pawapay/`:
-- `enums.ts` - All Pawapay enums
-- `types.ts` - All interfaces
-- `index.ts` - Main exports with utility functions
+#### Ce Que Cela Fait
+Crée des fichiers TypeScript dans `resources/js/pawapay/` :
+- `enums.ts` - Toutes les énumérations Pawapay
+- `types.ts` - Toutes les interfaces
+- `index.ts` - Exports principaux avec fonctions utilitaires
 
-#### Usage Example
+#### Exemple d'Utilisation
 ```typescript
 import {
   SupportedProvider,
@@ -550,38 +550,38 @@ const currency: Currency = Currency.ZMW;
 const status: TransactionStatus = TransactionStatus.COMPLETED;
 
 if (isTransactionFinal(status)) {
-  console.log('Payment completed');
+  console.log('Paiement terminé');
 }
 ```
 
-#### Force Regeneration
+#### Régénération Forcée
 ```bash
 php artisan pawapay:generate-types --force
 ```
 
-## 🔧 Advanced Usage
+## 🔧 Utilisation Avancée
 
-### Idempotency
+### Idempotence
 
-All deposit operations are idempotent. Using the same `depositId` multiple times will result in `DUPLICATE_IGNORED` status:
+Toutes les opérations de dépôt sont idempotentes. Utiliser le même `depositId` plusieurs fois donnera un statut `DUPLICATE_IGNORED` :
 
 ```php
-// First request
+// Première requête
 $response1 = Pawapay::initiateDeposit($requestData);
-// Status: ACCEPTED
+// Statut : ACCEPTED
 
-// Second identical request
+// Deuxième requête identique
 $response2 = Pawapay::initiateDeposit($requestData);
-// Status: DUPLICATE_IGNORED (no duplicate transaction)
+// Statut : DUPLICATE_IGNORED (pas de transaction dupliquée)
 ```
 
-### Metadata Support
+### Support des Métadonnées
 
-Attach custom metadata to payments for tracking:
+Attachez des métadonnées personnalisées aux paiements pour le suivi :
 
 ```php
 $requestData = PaymentPageRequestData::fromArray([
-    // ... other fields
+    // ... autres champs
     'metadata' => [
         ['orderId' => 'ORD-123'],
         ['userId' => 456],
@@ -594,18 +594,18 @@ $requestData = PaymentPageRequestData::fromArray([
 ]);
 ```
 
-Metadata is preserved throughout the payment lifecycle and can be retrieved when checking deposit status.
+Les métadonnées sont conservées tout au long du cycle de paiement et peuvent être récupérées lors de la vérification du statut du dépôt.
 
-### Phone Number Normalization
+### Normalisation des Numéros de Téléphone
 
-The package automatically normalizes phone numbers:
+Le package normalise automatiquement les numéros de téléphone :
 
 ```php
 $response = Pawapay::predictProvider('+260 763-456-789');
-echo $response->phoneNumber; // "260763456789" (normalized)
+echo $response->phoneNumber; // "260763456789" (normalisé)
 ```
 
-### Error Handling Best Practices
+### Bonnes Pratiques de Gestion des Erreurs
 
 ```php
 use Illuminate\Http\Client\RequestException;
@@ -615,68 +615,68 @@ try {
     $response = Pawapay::predictProvider($phoneNumber);
 
     if ($response->isFailure()) {
-        // API returned a business error
+        // L'API a retourné une erreur métier
         $errorCode = $response->failureReason->failureCode;
         $errorMessage = $response->failureReason->failureMessage;
 
-        // Handle specific error codes
+        // Gérez des codes d'erreur spécifiques
         if ($errorCode === FailureCode::INVALID_PHONE_NUMBER) {
-            return back()->withErrors(['phone' => 'Invalid phone number']);
+            return back()->withErrors(['phone' => 'Numéro de téléphone invalide']);
         }
 
         if ($errorCode === FailureCode::INSUFFICIENT_BALANCE) {
-            return back()->withErrors(['payment' => 'Insufficient balance']);
+            return back()->withErrors(['payment' => 'Solde insuffisant']);
         }
     }
 
-    // Process successful response
+    // Traitez la réponse réussie
     return redirect($response->redirectUrl);
 
 } catch (RequestException $e) {
-    // Network or HTTP error
-    Log::error('PawaPay API request failed', [
+    // Erreur réseau ou HTTP
+    Log::error('Requête API PawaPay échouée', [
         'message' => $e->getMessage(),
         'status' => $e->response->status(),
         'body' => $e->response->body(),
     ]);
 
     return back()->withErrors([
-        'payment' => 'Payment service temporarily unavailable'
+        'payment' => 'Service de paiement temporairement indisponible'
     ]);
 
 } catch (PawapayApiException $e) {
-    // Package-specific exception
-    Log::error('PawaPay SDK error', [
+    // Exception spécifique au package
+    Log::error('Erreur SDK PawaPay', [
         'message' => $e->getMessage(),
         'data' => $e->getErrorData(),
     ]);
 
     return back()->withErrors([
-        'payment' => 'Payment processing error'
+        'payment' => 'Erreur de traitement du paiement'
     ]);
 }
 ```
 
-## ⚙️ Configuration Details
+## ⚙️ Détails de Configuration
 
-### Timeouts and Retries
+### Timeouts et Tentatives
 
-Configure in `.env`:
+Configurez dans `.env` :
 
 ```env
-# Request timeout in seconds
+# Timeout de requête en secondes
 PAWAPAY_TIMEOUT=30
 
-# Number of retry attempts for failed requests
+# Nombre de tentatives pour les requêtes échouées
 PAWAPAY_RETRY_TIMES=3
 
-# Delay between retries in milliseconds
+# Délai entre les tentatives en millisecondes
 PAWAPAY_RETRY_SLEEP=100
 ```
 
-### Custom Headers
+### En-têtes Personnalisés
 
-Extend default headers in configuration:
+Étendez les en-têtes par défaut dans la configuration :
 
 ```php
 // config/pawapay.php
@@ -684,30 +684,30 @@ Extend default headers in configuration:
     'headers' => [
         'Content-Type' => 'application/json',
         'Accept' => 'application/json',
-        'X-Custom-Header' => 'Your-Value',
+        'X-Custom-Header' => 'Votre-Valeur',
     ],
 ],
 ```
 
-### Environment Switching
+### Basculement d'Environnement
 
 ```php
-// Switch to production
+// Basculer vers la production
 config()->set('pawapay.environment', 'production');
 
-// Or use .env
+// Ou utilisez .env
 PAWAPAY_ENVIRONMENT=production
 ```
 
-## 🔄 Complete Workflow Examples
+## 🔄 Exemples de Workflow Complet
 
-### E-commerce Checkout Flow (Using Built-in API)
+### Flux de Paiement E-commerce (Utilisant l'API Intégrée)
 
 ```javascript
 // Frontend JavaScript (React/Vue/etc)
 async function processPayment(phoneNumber, amount, orderId) {
     try {
-        // Step 1: Predict provider
+        // Étape 1 : Prédire le fournisseur
         const providerResponse = await fetch('/api/pawapay/predict-provider', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -717,17 +717,17 @@ async function processPayment(phoneNumber, amount, orderId) {
         const providerData = await providerResponse.json();
 
         if (!providerData.success) {
-            throw new Error('Unable to detect mobile money provider');
+            throw new Error('Impossible de détecter le fournisseur mobile money');
         }
 
-        // Step 2: Create payment page
+        // Étape 2 : Créer la page de paiement
         const paymentResponse = await fetch('/api/pawapay/payment-page', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 depositId: orderId,
                 returnUrl: `${window.location.origin}/payment/callback`,
-                customerMessage: `Payment for Order #${orderId}`,
+                customerMessage: `Paiement pour la Commande #${orderId}`,
                 amountDetails: {
                     amount: amount.toString(),
                     currency: providerData.data.country === 'ZMB' ? 'ZMW' : 'XOF'
@@ -735,10 +735,10 @@ async function processPayment(phoneNumber, amount, orderId) {
                 phoneNumber: providerData.data.phoneNumber,
                 language: navigator.language.startsWith('fr') ? 'FR' : 'EN',
                 country: providerData.data.country,
-                reason: 'Online Store Purchase',
+                reason: 'Achat en ligne',
                 metadata: [
                     { orderId },
-                    { customerId: 'current-user-id' }
+                    { customerId: 'id-utilisateur-actuel' }
                 ]
             })
         });
@@ -746,30 +746,30 @@ async function processPayment(phoneNumber, amount, orderId) {
         const paymentData = await paymentResponse.json();
 
         if (paymentData.success) {
-            // Redirect to PawaPay payment page
+            // Redirigez vers la page de paiement PawaPay
             window.location.href = paymentData.data.redirectUrl;
         } else {
-            throw new Error(paymentData.error || 'Payment creation failed');
+            throw new Error(paymentData.error || 'Échec de la création du paiement');
         }
 
     } catch (error) {
-        console.error('Payment error:', error);
-        alert('Payment failed: ' + error.message);
+        console.error('Erreur de paiement :', error);
+        alert('Échec du paiement : ' + error.message);
     }
 }
 ```
 
-### Subscription Service with Direct Deposits (Using SDK)
+### Service d'Abonnement avec Dépôts Directs (Utilisant le SDK)
 
 ```php
 class SubscriptionController
 {
     public function renewSubscription(Subscription $subscription)
     {
-        // Get user's phone from profile
+        // Obtenez le téléphone de l'utilisateur depuis son profil
         $user = $subscription->user;
 
-        // Create deposit request using SDK
+        // Créez une requête de dépôt en utilisant le SDK
         $depositId = (string) Str::uuid();
 
         $response = Pawapay::initiateDeposit([
@@ -784,7 +784,7 @@ class SubscriptionController
             'amount' => $subscription->amount,
             'currency' => 'ZMW',
             'clientReferenceId' => 'SUB-' . $subscription->id,
-            'customerMessage' => 'Monthly subscription renewal',
+            'customerMessage' => 'Renouvellement d\'abonnement mensuel',
             'metadata' => [
                 ['subscriptionId' => $subscription->id],
                 ['userId' => $user->id],
@@ -792,14 +792,14 @@ class SubscriptionController
             ],
         ]);
 
-        // Handle response
+        // Gérez la réponse
         if ($response->isAccepted()) {
-            // Queue status check
+            // Mettez en file d'attente la vérification du statut
             CheckDepositStatus::dispatch($depositId)
                 ->delay(now()->addMinutes(5));
 
             return response()->json([
-                'message' => 'Payment initiated',
+                'message' => 'Paiement initié',
                 'depositId' => $depositId,
             ]);
         } else {
@@ -811,15 +811,15 @@ class SubscriptionController
 
     public function webhook(Request $request)
     {
-        // Verify webhook signature
+        // Vérifiez la signature du webhook
         $payload = $request->all();
         $depositId = $payload['depositId'];
 
-        // Update subscription based on status
+        // Mettez à jour l'abonnement basé sur le statut
         $status = Pawapay::checkDepositStatus($depositId);
 
         if ($status->isFound() && $status->data->status === TransactionStatus::COMPLETED) {
-            // Update subscription
+            // Mettez à jour l'abonnement
             $metadata = collect($status->data->metadata);
             $subscriptionId = $metadata->firstWhere('subscriptionId');
 
@@ -829,21 +829,21 @@ class SubscriptionController
             ]);
         }
 
-        return response()->json(['status' => 'processed']);
+        return response()->json(['status' => 'traité']);
     }
 }
 ```
 
-## 🔐 Security Best Practices
+## 🔐 Bonnes Pratiques de Sécurité
 
-### 1. Store API Tokens Securely
+### 1. Stockez les Tokens API de Manière Sécurisée
 
 ```env
-# Never commit tokens to version control
+# Ne committez jamais les tokens dans le contrôle de version
 PAWAPAY_API_TOKEN=${PAWAPAY_API_TOKEN}
 ```
 
-### 2. Validate Input Data
+### 2. Validez les Données d'Entrée
 
 ```php
 use Illuminate\Validation\Rule;
@@ -858,7 +858,7 @@ $validated = $request->validate([
         'required',
         'numeric',
         'min:1',
-        'max:100000' // Set reasonable limits
+        'max:100000' // Définissez des limites raisonnables
     ],
     'currency' => [
         'required',
@@ -867,7 +867,7 @@ $validated = $request->validate([
 ]);
 ```
 
-### 3. Implement Webhook Signature Verification
+### 3. Implémentez la Vérification de Signature des Webhooks
 
 ```php
 public function handleWebhook(Request $request)
@@ -879,14 +879,14 @@ public function handleWebhook(Request $request)
     $expectedSignature = hash_hmac('sha256', $payload, $secret);
 
     if (!hash_equals($expectedSignature, $signature)) {
-        abort(401, 'Invalid webhook signature');
+        abort(401, 'Signature de webhook invalide');
     }
 
-    // Process webhook
+    // Traitez le webhook
 }
 ```
 
-### 4. Monitor and Log Transactions
+### 4. Surveillez et Journalisez les Transactions
 
 ```php
 use Illuminate\Support\Facades\Log;
@@ -898,18 +898,18 @@ class PaymentService
         try {
             $response = Pawapay::createPaymentPage($data);
 
-            Log::info('Payment initiated', [
+            Log::info('Paiement initié', [
                 'depositId' => $data['depositId'],
                 'amount' => $data['amountDetails']['amount'],
                 'currency' => $data['amountDetails']['currency'],
-                'response_status' => $response->status ?? 'unknown',
+                'response_status' => $response->status ?? 'inconnu',
             ]);
 
             return $response;
 
         } catch (Exception $e) {
-            Log::error('Payment initiation failed', [
-                'depositId' => $data['depositId'] ?? 'unknown',
+            Log::error('Échec d\'initiation de paiement', [
+                'depositId' => $data['depositId'] ?? 'inconnu',
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -920,11 +920,11 @@ class PaymentService
 }
 ```
 
-## 🔄 Migration Guide
+## 🔄 Guide de Migration
 
-### From Raw API Calls to Package
+### Des Appels API Bruts au Package
 
-**Before:**
+**Avant :**
 
 ```php
 public function makePayment($data)
@@ -933,14 +933,14 @@ public function makePayment($data)
         ->post('https://api.sandbox.pawapay.io/v2/paymentpage', $data);
 
     if ($response->failed()) {
-        throw new Exception('Payment failed: ' . $response->body());
+        throw new Exception('Échec du paiement : ' . $response->body());
     }
 
     return $response->json();
 }
 ```
 
-**After:**
+**Après :**
 
 ```php
 use Pawapay\Facades\Pawapay;
@@ -952,26 +952,26 @@ public function makePayment($data)
     $response = Pawapay::createPaymentPage($requestData);
 
     if ($response->isFailure()) {
-        throw new Exception('Payment failed: ' . $response->failureReason->failureMessage);
+        throw new Exception('Échec du paiement : ' . $response->failureReason->failureMessage);
     }
 
     return $response;
 }
 ```
 
-### Using the Built-in API vs Custom Implementation
+### API Intégrée vs Implémentation Personnalisée
 
-| Approach | Best For | Pros |
+| Approche | Idéal Pour | Avantages |
 |----------|----------|------|
-| **Built-in API** | Quick setup, SPAs, mobile apps | Zero configuration, automatic validation, ready-to-use |
-| **SDK Direct** | Custom business logic, complex workflows | Full control, direct integration, custom error handling |
-| **Custom Routes** | Advanced API customization | Complete control over routes and middleware |
+| **API Intégrée** | Configuration rapide, SPAs, applications mobiles | Configuration zéro, validation automatique, prêt à l'emploi |
+| **SDK Direct** | Logique métier personnalisée, workflows complexes | Contrôle total, intégration directe, gestion d'erreurs personnalisée |
+| **Routes Personnalisées** | Personnalisation API avancée | Contrôle complet sur les routes et middleware |
 
-## 🤝 Contributing
+## 🤝 Contribution
 
-We welcome contributions! Here's how to get started:
+Nous accueillons les contributions ! Voici comment commencer :
 
-### 1. Fork the Repository
+### 1. Forkez le Dépôt
 
 ```bash
 git clone https://github.com/andydefer/laravel-pawapay.git
@@ -979,86 +979,86 @@ cd laravel-pawapay
 composer install
 ```
 
-### 2. Run Tests
+### 2. Exécutez les Tests
 
 ```bash
-# Unit tests
+# Tests unitaires
 composer test
 
-# Integration tests (requires sandbox token)
-PAWAPAY_API_TOKEN=your_token composer test --group=integration
+# Tests d'intégration (nécessite un token sandbox)
+PAWAPAY_API_TOKEN=votre_token composer test --group=integration
 
-# Code style
+# Style de code
 composer lint
 
-# Static analysis
+# Analyse statique
 composer analyse
 ```
 
-### 3. Development Workflow
+### 3. Workflow de Développement
 
 ```bash
-# 1. Create a feature branch
-git checkout -b feature/new-provider-support
+# 1. Créez une branche de fonctionnalité
+git checkout -b feature/nouveau-support-fournisseur
 
-# 2. Make your changes
-# 3. Add tests
-# 4. Run tests
+# 2. Faites vos modifications
+# 3. Ajoutez des tests
+# 4. Exécutez les tests
 composer test
 
-# 5. Check code style
+# 5. Vérifiez le style de code
 composer lint
 
-# 6. Commit with descriptive message
-git commit -m "feat: add support for new mobile money provider"
+# 6. Committez avec un message descriptif
+git commit -m "feat: ajouter le support pour un nouveau fournisseur mobile money"
 
-# 7. Push and create PR
-git push origin feature/new-provider-support
+# 7. Poussez et créez une PR
+git push origin feature/nouveau-support-fournisseur
 ```
 
-### 4. Coding Standards
+### 4. Standards de Codage
 
-- Follow PSR-12 coding standards
-- Write PHPStan level 9 compatible code
-- Add type hints for all methods
-- Include comprehensive tests
-- Update documentation for new features
+- Suivez les standards de codage PSR-12
+- Écrivez du code compatible PHPStan niveau 9
+- Ajoutez des indications de type pour toutes les méthodes
+- Incluez des tests complets
+- Mettez à jour la documentation pour les nouvelles fonctionnalités
 
-## 📚 Additional Resources
+## 📚 Ressources Supplémentaires
 
-### Official Documentation
-- [PawaPay API Documentation](https://docs.pawapay.io)
-- [Laravel Documentation](https://laravel.com/docs)
+### Documentation Officielle
+- [Documentation API PawaPay](https://docs.pawapay.io)
+- [Documentation Laravel](https://laravel.com/docs)
 
-### Community
-- [GitHub Issues](https://github.com/andydefer/laravel-pawapay/issues)
-- [Discord Community](https://discord.gg/your-link)
-- [Twitter Updates](https://twitter.com/your-handle)
+### Communauté
+- [Problèmes GitHub](https://github.com/andydefer/laravel-pawapay/issues)
+- [Communauté Discord](https://discord.gg/votre-lien)
+- [Mises à jour Twitter](https://twitter.com/votre-handle)
 
-### Related Packages
-- [Laravel Cashier](https://laravel.com/docs/billing) - For Stripe integration
-- [Laravel Flutterwave](https://github.com/kingflamez/laravelrave) - For Flutterwave payments
-- [Laravel Paystack](https://github.com/unicodeveloper/laravel-paystack) - For Paystack integration
+### Packages Similaires
+- [Laravel Cashier](https://laravel.com/docs/billing) - Pour l'intégration Stripe
+- [Laravel Flutterwave](https://github.com/kingflamez/laravelrave) - Pour les paiements Flutterwave
+- [Laravel Paystack](https://github.com/unicodeveloper/laravel-paystack) - Pour l'intégration Paystack
 
-## 📄 License
+## 📄 Licence
 
-This package is open-source software licensed under the [MIT license](LICENSE).
+Ce package est un logiciel open-source sous licence [MIT](LICENSE).
 
 ## 🏆 Support
 
-If this package has been helpful to you, consider:
+Si ce package vous a été utile, pensez à :
 
-- ⭐ Starring the repository on GitHub
-- 📢 Sharing with your network
-- 💼 Using it in your commercial projects
-- 🐛 Reporting issues and suggesting features
+- ⭐ Étoiler le dépôt sur GitHub
+- 📢 Partager avec votre réseau
+- 💼 L'utiliser dans vos projets commerciaux
+- 🐛 Signaler des problèmes et suggérer des fonctionnalités
 
-## 📞 Need Help?
+## 📞 Besoin d'Aide ?
 
-- **Documentation**: Check the [GitHub Wiki](https://github.com/andydefer/laravel-pawapay/wiki)
-- **Issues**: [GitHub Issues](https://github.com/andydefer/laravel-pawapay/issues)
-- **Email**: andykanidimbu@gmail.com
+- **Documentation** : Consultez le [Wiki GitHub](https://github.com/andydefer/laravel-pawapay/wiki)
+- **Problèmes** : [Problèmes GitHub](https://github.com/andydefer/laravel-pawapay/issues)
+- **Email** : andykanidimbu@gmail.com
 
 ---
 
-**Laravel PawaPay SDK** - Empowering African commerce with seamless mobile money payments. Built with ❤️ for the Laravel community in Africa and beyond.
+**Laravel PawaPay SDK** - Autonomiser le commerce africain avec des paiements mobile money fluides. Construit avec ❤️ pour la communauté Laravel en Afrique et au-delà.
