@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pawapay\Services;
 
 use Illuminate\Filesystem\Filesystem;
-use Illuminate\Support\Facades\File;
 
 class TypesGeneratorService
 {
@@ -28,12 +27,12 @@ class TypesGeneratorService
         }
 
         $result = [
-            'enums' => 0,
-            'interfaces' => 0,
-            'skipped' => 0,
+            'generated' => [],
+            'skipped' => [],
+            'total' => 0,
         ];
 
-        // Générer les fichiers
+        // Fichiers à générer depuis les stubs internes
         $files = [
             'enums.ts.stub' => 'enums.ts',
             'types.ts.stub' => 'types.ts',
@@ -41,35 +40,78 @@ class TypesGeneratorService
         ];
 
         foreach ($files as $stubFile => $targetFile) {
-            $stub = $this->stubPath . '/' . $stubFile;
-            $target = $this->targetPath . '/' . $targetFile;
+            $stubPath = $this->stubPath . '/' . $stubFile;
+            $targetPath = $this->targetPath . '/' . $targetFile;
 
-            if (!$this->filesystem->exists($stub)) {
-                throw new \RuntimeException("Stub file not found: {$stub}");
+            // Vérifier si le stub interne existe
+            if (!$this->filesystem->exists($stubPath)) {
+                throw new \RuntimeException("Stub file not found: {$stubFile}");
             }
 
-            // Vérifier si le fichier existe déjà
-            if ($this->filesystem->exists($target) && !$force) {
-                $result['skipped']++;
+            // Vérifier si le fichier cible existe déjà
+            if ($this->filesystem->exists($targetPath) && !$force) {
+                $result['skipped'][] = $targetFile;
                 continue;
             }
 
-            // Copier le stub
-            $this->filesystem->copy($stub, $target);
+            // Lire le contenu du stub et le traiter
+            $content = $this->filesystem->get($stubPath);
 
-            // Compter les fichiers générés
-            if (str_contains($targetFile, 'enum')) {
-                $result['enums']++;
-            } else {
-                $result['interfaces']++;
-            }
+            // Optionnel: Effectuer des transformations si nécessaire
+            // $content = $this->processContent($content);
+
+            // Écrire le fichier TypeScript final
+            $this->filesystem->put($targetPath, $content);
+
+            $result['generated'][] = $targetFile;
+            $result['total']++;
         }
 
         return $result;
     }
 
+    public function clean(): bool
+    {
+        if (!$this->filesystem->exists($this->targetPath)) {
+            return true;
+        }
+
+        // Supprimer tous les fichiers générés
+        $filesToDelete = ['enums.ts', 'types.ts', 'index.ts'];
+        $deleted = 0;
+
+        foreach ($filesToDelete as $file) {
+            $filePath = $this->targetPath . '/' . $file;
+            if ($this->filesystem->exists($filePath)) {
+                $this->filesystem->delete($filePath);
+                $deleted++;
+            }
+        }
+
+        // Si le dossier est vide, le supprimer
+        $filesInDir = $this->filesystem->files($this->targetPath);
+        if (empty($filesInDir)) {
+            $this->filesystem->deleteDirectory($this->targetPath);
+        }
+
+        return $deleted > 0;
+    }
+
     public function getTargetPath(): string
     {
         return $this->targetPath;
+    }
+
+    public function isGenerated(): bool
+    {
+        $requiredFiles = ['enums.ts', 'types.ts', 'index.ts'];
+
+        foreach ($requiredFiles as $file) {
+            if (!$this->filesystem->exists($this->targetPath . '/' . $file)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

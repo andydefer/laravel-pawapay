@@ -5,47 +5,62 @@ declare(strict_types=1);
 namespace Pawapay\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Filesystem\Filesystem;
 use Pawapay\Services\TypesGeneratorService;
 
-final class GenerateTypesCommand extends Command
+class GenerateTypesCommand extends Command
 {
     protected $signature = 'pawapay:generate-types
-                            {--force : Overwrite existing files without confirmation}';
+                            {--force : Force regeneration of all TypeScript files}
+                            {--clean : Clean all generated TypeScript files}';
 
-    protected $description = 'Generate TypeScript types and enums for Pawapay API';
+    protected $description = 'Generate TypeScript definitions for Pawapay API';
 
-    public function handle(TypesGeneratorService $generatorService): int
+    public function handle(TypesGeneratorService $typesGenerator): int
     {
-        try {
-            $force = (bool) $this->option('force');
+        if ($this->option('clean')) {
+            $this->info('🧹 Cleaning TypeScript definitions...');
 
-            $this->info('Generating Pawapay TypeScript definitions...');
-
-            $result = $generatorService->generate($force);
-
-            $this->newLine();
-
-            if ($result['enums']) {
-                $this->info('✅ Enums generated: ' . $result['enums']);
+            if ($typesGenerator->clean()) {
+                $this->info('✅ TypeScript definitions cleaned successfully.');
+            } else {
+                $this->info('ℹ️  No TypeScript definitions to clean.');
             }
-
-            if ($result['interfaces']) {
-                $this->info('✅ Interfaces generated: ' . $result['interfaces']);
-            }
-
-            if ($result['skipped']) {
-                $this->warn('⚠️  Skipped (already exist): ' . $result['skipped']);
-            }
-
-            $this->newLine();
-            $this->info('🎉 TypeScript definitions generated successfully!');
-            $this->info('📁 Location: ' . resource_path('js/pawapay'));
 
             return self::SUCCESS;
+        }
+
+        $force = (bool) $this->option('force');
+
+        $this->info('💻 Generating TypeScript definitions...');
+
+        try {
+            $result = $typesGenerator->generate($force);
+
+            if (!empty($result['generated'])) {
+                $this->info('✅ TypeScript types generated successfully:');
+                foreach ($result['generated'] as $file) {
+                    $this->line("   - <comment>{$file}</comment>");
+                }
+            }
+
+            if (!empty($result['skipped'])) {
+                $this->warn('⚠️  Some files were skipped (use --force to overwrite):');
+                foreach ($result['skipped'] as $file) {
+                    $this->line("   - {$file}");
+                }
+            }
+
+            if ($result['total'] === 0 && empty($result['generated']) && empty($result['skipped'])) {
+                $this->warn('⚠️  No TypeScript files were generated.');
+            }
+
+            $this->newLine();
+            $this->info('📁 Files location: <comment>' . $typesGenerator->getTargetPath() . '</comment>');
         } catch (\Exception $e) {
-            $this->error('❌ Error generating types: ' . $e->getMessage());
+            $this->error('❌ Failed to generate TypeScript types: ' . $e->getMessage());
             return self::FAILURE;
         }
+
+        return self::SUCCESS;
     }
 }

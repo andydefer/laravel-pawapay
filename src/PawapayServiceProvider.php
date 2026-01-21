@@ -102,21 +102,23 @@ class PawapayServiceProvider extends ServiceProvider
                 InstallPawapayCommand::class,
             ]);
 
+            // Configuration
             $this->publishes([
                 __DIR__ . '/../config/pawapay.php' => config_path('pawapay.php'),
             ], 'pawapay-config');
 
-            $this->publishes([
-                __DIR__ . '/stubs/typescript' => resource_path('js/pawapay'),
-            ], 'pawapay-types');
-
+            // Controller (publication du stub transformé en fichier PHP)
             $this->publishes([
                 __DIR__ . '/stubs/controllers/PawapayController.stub' => app_path('Http/Controllers/Api/PawapayController.php'),
             ], 'pawapay-controller');
 
+            // Routes personnalisées (optionnel)
             $this->publishes([
                 __DIR__ . '/stubs/routes/pawapay-routes.stub' => base_path('routes/pawapay.php'),
             ], 'pawapay-routes');
+
+            // NOTE: On ne publie plus les stubs TypeScript
+            // Les fichiers TypeScript sont générés directement par la commande
         }
     }
 

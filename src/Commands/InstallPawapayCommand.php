@@ -6,6 +6,7 @@ namespace Pawapay\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
+use Pawapay\Services\TypesGeneratorService;
 
 class InstallPawapayCommand extends Command
 {
@@ -44,10 +45,8 @@ class InstallPawapayCommand extends Command
                 'tag' => 'pawapay-routes',
                 'optional' => true,
             ],
-            'types' => [
-                'name' => 'TypeScript Stubs',
-                'tag' => 'pawapay-types',
-            ],
+            // Note: On ne publie plus les types TypeScript ici
+            // Ils sont générés directement par generateTypescriptTypes()
         ];
 
         foreach ($resources as $resource) {
@@ -78,15 +77,32 @@ class InstallPawapayCommand extends Command
     {
         $this->info('💻 Generating TypeScript definitions...');
 
-        $result = $this->call('pawapay:generate-types', [
-            '--force' => $force,
-            '--quiet' => false,
-        ]);
+        try {
+            /** @var TypesGeneratorService $typesGenerator */
+            $typesGenerator = app(TypesGeneratorService::class);
 
-        if ($result === self::SUCCESS) {
-            $this->info('✅ TypeScript types generated successfully');
-        } else {
-            $this->warn('⚠️  TypeScript types generation had issues');
+            $result = $typesGenerator->generate($force);
+
+            if (!empty($result['generated'])) {
+                $this->info('✅ TypeScript types generated successfully:');
+                foreach ($result['generated'] as $file) {
+                    $this->line("   - <comment>{$file}</comment>");
+                }
+            }
+
+            if (!empty($result['skipped'])) {
+                $this->warn('⚠️  Some files were skipped (use --force to overwrite):');
+                foreach ($result['skipped'] as $file) {
+                    $this->line("   - {$file}");
+                }
+            }
+
+            if ($result['total'] === 0 && empty($result['generated']) && empty($result['skipped'])) {
+                $this->warn('⚠️  No TypeScript files were generated or found.');
+            }
+        } catch (\Exception $e) {
+            $this->error('❌ Failed to generate TypeScript types: ' . $e->getMessage());
+            $this->line('Please run <comment>php artisan pawapay:generate-types</comment> manually.');
         }
     }
 
@@ -111,8 +127,8 @@ class InstallPawapayCommand extends Command
         $this->newLine();
 
         $this->info('🔧 Available artisan commands:');
-        $this->line('   <comment>php artisan pawapay:generate-types</comment>');
-        $this->line('   <comment>php artisan pawapay:install</comment>');
+        $this->line('   <comment>php artisan pawapay:generate-types</comment> - Generate/update TypeScript types');
+        $this->line('   <comment>php artisan pawapay:install</comment> - Install/reinstall package');
         $this->newLine();
 
         $this->info('📁 Generated files:');
