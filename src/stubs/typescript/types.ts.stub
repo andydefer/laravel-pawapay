@@ -93,13 +93,13 @@ export interface AmountDetailsData {
 export interface PaymentPageRequestData {
   depositId: string;
   returnUrl: string;
-  customerMessage?: string;
-  amountDetails?: AmountDetailsData;
-  phoneNumber?: string;
-  language?: Language;
-  country?: SupportedCountry;
-  reason?: string;
-  metadata?: Array<Record<string, string | number | boolean>>;
+  customerMessage: string;
+  amountDetails: AmountDetailsData;
+  phoneNumber: string;
+  language: Language;
+  country: SupportedCountry;
+  reason: string;
+  metadata: Array<Record<string, string>>;
 }
 
 // ===== ./src/Data/PaymentPage/PaymentPageSuccessResponseData.php =====

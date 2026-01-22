@@ -10,23 +10,22 @@ use Pawapay\Enums\SupportedCountry;
 use Spatie\LaravelData\Attributes\WithCast;
 use Spatie\LaravelData\Casts\EnumCast;
 use Spatie\LaravelData\Data;
-use Spatie\LaravelData\Optional;
 
 final class PaymentPageRequestData extends Data
 {
     public function __construct(
         public string $depositId,
         public string $returnUrl,
-        public string|Optional $customerMessage,
-        public AmountDetailsData|Optional $amountDetails,
-        public string|Optional $phoneNumber,
+        public string $customerMessage,
+        public AmountDetailsData $amountDetails,
+        public string $phoneNumber,
         #[WithCast(EnumCast::class)]
-        public Language|Optional $language,
+        public Language $language,
         #[WithCast(EnumCast::class)]
-        public SupportedCountry|Optional $country,
-        public string|Optional $reason,
-        /** @var array<int, array<string, mixed>>|Optional */
-        public array|Optional $metadata
+        public SupportedCountry $country,
+        public string $reason,
+        /** @var array<int, array<string, string>> */
+        public array $metadata
     ) {}
 
     /**
@@ -34,60 +33,78 @@ final class PaymentPageRequestData extends Data
      */
     public static function fromArray(array $data): static
     {
-        $amountDetails = isset($data['amountDetails'])
-            ? AmountDetailsData::fromArray($data['amountDetails'])
-            : Optional::create();
+        self::validateRequiredFields($data);
 
-        $metadata = self::validateMetadata($data['metadata'] ?? Optional::create());
+        $amountDetails = AmountDetailsData::fromArray($data['amountDetails']);
+
+        $metadata = self::validateMetadata($data['metadata']);
 
         return new self(
             depositId: $data['depositId'],
             returnUrl: $data['returnUrl'],
-            customerMessage: $data['customerMessage'] ?? Optional::create(),
+            customerMessage: $data['customerMessage'],
             amountDetails: $amountDetails,
-            phoneNumber: $data['phoneNumber'] ?? Optional::create(),
-            language: isset($data['language'])
-                ? Language::from($data['language'])
-                : Optional::create(),
-            country: isset($data['country'])
-                ? SupportedCountry::from($data['country'])
-                : Optional::create(),
-            reason: $data['reason'] ?? Optional::create(),
+            phoneNumber: $data['phoneNumber'],
+            language: Language::from($data['language']),
+            country: SupportedCountry::from($data['country']),
+            reason: $data['reason'],
             metadata: $metadata
         );
     }
 
     /**
-     * @param array<int, array<string, mixed>>|Optional $metadata
-     * @return array<int, array<string, mixed>>|Optional
+     * @param array<string, mixed> $data
      */
-    private static function validateMetadata(array|Optional $metadata): array|Optional
+    private static function validateRequiredFields(array $data): void
     {
-        if ($metadata instanceof Optional) {
-            return $metadata;
-        }
+        $requiredFields = [
+            'depositId',
+            'returnUrl',
+            'customerMessage',
+            'amountDetails',
+            'phoneNumber',
+            'language',
+            'country',
+            'reason',
+            'metadata'
+        ];
 
-        if (! array_is_list($metadata)) {
-            throw new InvalidArgumentException('Metadata must be a list of associative arrays.');
+        foreach ($requiredFields as $field) {
+            if (!isset($data[$field])) {
+                throw new InvalidArgumentException(
+                    sprintf('Le champ "%s" est requis.', $field)
+                );
+            }
+        }
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $metadata
+     * @return array<int, array<string, mixed>>
+     */
+    private static function validateMetadata(array $metadata): array
+    {
+        if (!array_is_list($metadata)) {
+            throw new InvalidArgumentException('Metadata doit être une liste de tableaux associatifs.');
         }
 
         foreach ($metadata as $index => $item) {
-            if (! is_array($item) || array_is_list($item)) {
+            if (!is_array($item) || array_is_list($item)) {
                 throw new InvalidArgumentException(
-                    sprintf('Metadata item at index %d must be an associative array.', $index)
+                    sprintf('L\'élément metadata à l\'index %d doit être un tableau associatif.', $index)
                 );
             }
 
             foreach ($item as $key => $value) {
-                if (! is_string($key)) {
+                if (!is_string($key)) {
                     throw new InvalidArgumentException(
-                        sprintf('Metadata item at index %d must have string keys.', $index)
+                        sprintf('L\'élément metadata à l\'index %d doit avoir des clés de type string.', $index)
                     );
                 }
 
-                if (! is_scalar($value)) {
+                if (!is_scalar($value)) {
                     throw new InvalidArgumentException(
-                        sprintf('Metadata item at index %d must have scalar values.', $index)
+                        sprintf('L\'élément metadata à l\'index %d doit avoir des valeurs scalaires.', $index)
                     );
                 }
             }

@@ -390,7 +390,7 @@ final class PawapayServiceTest extends TestCase
             'phoneNumber' => '260763456789',
             'language' => Language::EN->value,
             'country' => SupportedCountry::ZMB->value,
-            'reason' => null, // Reason est nullable
+            'reason' => 'Raison de paiment', // Reason est nullable
             'metadata' => [], // Tableau vide au lieu de null
         ]);
 

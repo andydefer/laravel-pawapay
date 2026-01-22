@@ -226,10 +226,18 @@ class PawapayControllerTest extends TestCase
         $response = $this->postJson('/api/pawapay/payment-page', [
             'depositId' => $this->uuid,
             'returnUrl' => 'https://example.com/return',
+            'customerMessage' => 'Paiement de test',
             'amountDetails' => [
                 'amount' => '100.00',
                 'currency' => Currency::ZMW->value,
             ],
+            'language' => Language::FR,
+            'country' => SupportedCountry::COD,
+            'phoneNumber' => '243827833329',
+            'reason' => 'Paiement de test',
+            'metadata' => [
+                ['paiement' => 'Paiement de test']
+            ]
         ]);
 
         $response->assertStatus(201);
@@ -423,10 +431,16 @@ class PawapayControllerTest extends TestCase
         $response = $this->postJson('/api/pawapay/payment-page', [
             'depositId' => $this->uuid,
             'returnUrl' => 'https://example.com/return',
+            'customerMessage' => 'Paiement de test',
+            'phoneNumber' => '260763456789',
             'amountDetails' => [
                 'amount' => '50.00',
                 'currency' => Currency::ZMW->value,
             ],
+            'language' => Language::EN->value,
+            'country' => SupportedCountry::ZMB->value,
+            'reason' => 'Paiement minimal',
+            'metadata' => [], // Tableau vide au lieu de null
         ]);
 
         $response->assertStatus(201);
