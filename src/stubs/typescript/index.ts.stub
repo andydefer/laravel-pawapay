@@ -98,3 +98,92 @@ export function isTransactionProcessing(status: TransactionStatus): boolean {
 export function formatPhoneNumber(phoneNumber: string): string {
   return phoneNumber.startsWith('+') ? phoneNumber.substring(1) : phoneNumber;
 }
+
+export const ProviderLabels: Record<SupportedProvider, string> = {
+  // Bénin
+  [SupportedProvider.MTN_MOMO_BEN]: 'MTN Mobile Money (Bénin)',
+  [SupportedProvider.MOOV_BEN]: 'Moov Money (Bénin)',
+
+  // Burkina Faso
+  [SupportedProvider.MOOV_BFA]: 'Moov Money (Burkina Faso)',
+  [SupportedProvider.ORANGE_BFA]: 'Orange Money (Burkina Faso)',
+
+  // Cameroun
+  [SupportedProvider.MTN_MOMO_CMR]: 'MTN Mobile Money (Cameroun)',
+  [SupportedProvider.ORANGE_CMR]: 'Orange Money (Cameroun)',
+
+  // Côte d'Ivoire
+  [SupportedProvider.MTN_MOMO_CIV]: 'MTN Mobile Money (Côte d\'Ivoire)',
+  [SupportedProvider.ORANGE_CIV]: 'Orange Money (Côte d\'Ivoire)',
+  [SupportedProvider.WAVE_CIV]: 'Wave (Côte d\'Ivoire)',
+
+  // République Démocratique du Congo
+  [SupportedProvider.VODACOM_MPESA_COD]: 'Vodacom M-Pesa (RDC)',
+  [SupportedProvider.AIRTEL_COD]: 'Airtel Money (RDC)',
+  [SupportedProvider.ORANGE_COD]: 'Orange Money (RDC)',
+
+  // Éthiopie
+  [SupportedProvider.MPESA_ETH]: 'M-Pesa (Éthiopie)',
+
+  // Gabon
+  [SupportedProvider.AIRTEL_GAB]: 'Airtel Money (Gabon)',
+
+  // Ghana
+  [SupportedProvider.MTN_MOMO_GHA]: 'MTN Mobile Money (Ghana)',
+  [SupportedProvider.AIRTELTIGO_GHA]: 'AirtelTigo Money (Ghana)',
+  [SupportedProvider.VODAFONE_GHA]: 'Vodafone Cash (Ghana)',
+
+  // Kenya
+  [SupportedProvider.MPESA_KEN]: 'M-Pesa (Kenya)',
+
+  // Lesotho
+  [SupportedProvider.MPESA_LSO]: 'M-Pesa (Lesotho)',
+
+  // Malawi
+  [SupportedProvider.AIRTEL_MWI]: 'Airtel Money (Malawi)',
+  [SupportedProvider.TNM_MWI]: 'TNM Mpamba (Malawi)',
+
+  // Mozambique
+  [SupportedProvider.MOVITEL_MOZ]: 'Movitel M-Pesa (Mozambique)',
+  [SupportedProvider.VODACOM_MOZ]: 'Vodacom M-Pesa (Mozambique)',
+
+  // Nigeria
+  [SupportedProvider.AIRTEL_NGA]: 'Airtel Money (Nigeria)',
+  [SupportedProvider.MTN_MOMO_NGA]: 'MTN Mobile Money (Nigeria)',
+
+  // République du Congo
+  [SupportedProvider.AIRTEL_COG]: 'Airtel Money (Congo)',
+  [SupportedProvider.MTN_MOMO_COG]: 'MTN Mobile Money (Congo)',
+
+  // Rwanda
+  [SupportedProvider.AIRTEL_RWA]: 'Airtel Money (Rwanda)',
+  [SupportedProvider.MTN_MOMO_RWA]: 'MTN Mobile Money (Rwanda)',
+
+  // Sénégal
+  [SupportedProvider.FREE_SEN]: 'Free Money (Sénégal)',
+  [SupportedProvider.ORANGE_SEN]: 'Orange Money (Sénégal)',
+  [SupportedProvider.WAVE_SEN]: 'Wave (Sénégal)',
+
+  // Sierra Leone
+  [SupportedProvider.ORANGE_SLE]: 'Orange Money (Sierra Leone)',
+
+  // Tanzanie
+  [SupportedProvider.AIRTEL_TZA]: 'Airtel Money (Tanzanie)',
+  [SupportedProvider.VODACOM_TZA]: 'Vodacom M-Pesa (Tanzanie)',
+  [SupportedProvider.TIGO_TZA]: 'Tigo Pesa (Tanzanie)',
+  [SupportedProvider.HALOTEL_TZA]: 'Halopesa (Tanzanie)',
+
+  // Ouganda
+  [SupportedProvider.AIRTEL_OAPI_UGA]: 'Airtel Money (Ouganda)',
+  [SupportedProvider.MTN_MOMO_UGA]: 'MTN Mobile Money (Ouganda)',
+
+  // Zambie
+  [SupportedProvider.AIRTEL_OAPI_ZMB]: 'Airtel Money (Zambie)',
+  [SupportedProvider.MTN_MOMO_ZMB]: 'MTN Mobile Money (Zambie)',
+  [SupportedProvider.ZAMTEL_ZMB]: 'Zamtel Kwacha (Zambie)'
+};
+
+// Fonction utilitaire pour obtenir le label
+export function getProviderLabel(provider: SupportedProvider): string {
+  return ProviderLabels[provider] || provider;
+}
