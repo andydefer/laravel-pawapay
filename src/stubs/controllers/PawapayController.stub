@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pawapay\Http\Controllers\Api;
+namespace App\Http\Controllers\Api;
 
 use Illuminate\Routing\Controller;
 use Pawapay\Data\Deposit\InitiateDepositRequestData;
