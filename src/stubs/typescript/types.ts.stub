@@ -50,7 +50,7 @@ export interface CheckDepositStatusResponseData {
   providerTransactionId?: string;
   created?: string;
   failureReason?: FailureReasonData;
-  metadata?: Array<Record<string, string>;
+  metadata?: Array<string, string>;
 }
 
 // ===== ./src/Data/Responses/PredictProviderResponseData.php =====
