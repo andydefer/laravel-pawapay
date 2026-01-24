@@ -57,8 +57,6 @@ class CheckDepositStatusResponseData extends Data
             $failureReason = FailureReasonData::fromArray($data['failureReason']);
         }
 
-        $metadata = self::validateMetadata($data['metadata'] ?? null);
-
         return new self(
             depositId: $data['depositId'],
             status: TransactionStatus::from($data['status']),
@@ -71,7 +69,7 @@ class CheckDepositStatusResponseData extends Data
             providerTransactionId: $data['providerTransactionId'] ?? null,
             created: $data['created'] ?? null,
             failureReason: $failureReason,
-            metadata: $metadata,
+            metadata: $data['metadata']  ?? null,
         );
     }
 
