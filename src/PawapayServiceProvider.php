@@ -31,13 +31,13 @@ class PawapayServiceProvider extends ServiceProvider
             $config = $app->make('config');
 
             $configData = new PawapayConfigData(
-                sandboxUrl: $config->get('pawapay.api.sandbox_url'),
-                productionUrl: $config->get('pawapay.api.production_url'),
-                token: $config->get('pawapay.api.token'),
+                sandboxUrl: (string) $config->get('pawapay.api.sandbox_url', ''),
+                productionUrl: (string) $config->get('pawapay.api.production_url', ''),
+                token: (string) $config->get('pawapay.api.token', ''),
                 timeout: (int) $config->get('pawapay.api.timeout', 30),
                 retryTimes: (int) $config->get('pawapay.api.retry_times', 3),
                 retrySleep: (int) $config->get('pawapay.api.retry_sleep', 100),
-                environment: $config->get('pawapay.environment', 'sandbox'),
+                environment: (string) $config->get('pawapay.environment', 'sandbox'),
                 defaultHeaders: $config->get('pawapay.defaults.headers', [
                     'Content-Type' => 'application/json',
                     'Accept' => 'application/json',

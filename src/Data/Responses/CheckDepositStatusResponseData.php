@@ -73,45 +73,6 @@ class CheckDepositStatusResponseData extends Data
         );
     }
 
-    /**
-     * @param array<int, array<string, mixed>>|null $metadata
-     * @return array<int, array<string, mixed>>|null
-     */
-    private static function validateMetadata(?array $metadata): ?array
-    {
-        if ($metadata === null) {
-            return null;
-        }
-
-        if (! array_is_list($metadata)) {
-            throw new InvalidArgumentException('Metadata must be a list of associative arrays.');
-        }
-
-        foreach ($metadata as $index => $item) {
-            if (! is_array($item) || array_is_list($item)) {
-                throw new InvalidArgumentException(
-                    sprintf('Metadata item at index %d must be an associative array.', $index)
-                );
-            }
-
-            foreach ($item as $key => $value) {
-                if (! is_string($key)) {
-                    throw new InvalidArgumentException(
-                        sprintf('Metadata item at index %d must have string keys.', $index)
-                    );
-                }
-
-                if (! is_scalar($value)) {
-                    throw new InvalidArgumentException(
-                        sprintf('Metadata item at index %d must have scalar values.', $index)
-                    );
-                }
-            }
-        }
-
-        return $metadata;
-    }
-
     public function isFinalStatus(): bool
     {
         return in_array($this->status, [
