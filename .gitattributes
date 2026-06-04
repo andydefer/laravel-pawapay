@@ -1,10 +1,1 @@
-/tests export-ignore
-/.github export-ignore
-/phpunit.xml export-ignore
-/phpunit.xml.dist export-ignore
-/.editorconfig export-ignore
-/.php-cs-fixer.php export-ignore
-/rector.php export-ignore
-/.gitignore export-ignore
-/.gitattributes export-ignore
-./src/DTOs
+/tests export-ignore\n/.github export-ignore\n/phpunit.xml export-ignore\n/phpunit.xml.dist export-ignore
