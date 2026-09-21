@@ -7,6 +7,8 @@ namespace AndyDefer\LaravelPawapay\Contracts;
 use AndyDefer\PhpPawapay\Collections\CountryCollection;
 use AndyDefer\PhpPawapay\Collections\CurrencyCollection;
 use AndyDefer\PhpPawapay\Collections\LanguageCollection;
+use AndyDefer\PhpPawapay\Collections\PayerTypeCollection;
+use AndyDefer\PhpPawapay\Collections\ProviderCollection;
 use AndyDefer\PhpPawapay\Contracts\PawapayInterface;
 use AndyDefer\PhpPawapay\Enums\PawaPayBaseUrl;
 
@@ -14,10 +16,8 @@ use AndyDefer\PhpPawapay\Enums\PawaPayBaseUrl;
  * Contract for the Laravel PawaPay package configuration.
  *
  * Exposes the API credentials, the base URL, the concrete service implementation,
- * and the whitelists of allowed currencies, languages, and countries.
- *
- * Implementations are expected to be resolvable from the Laravel container,
- * either as singletons or as bound instances.
+ * and the whitelists of allowed currencies, languages, countries, providers
+ * and payer types used by the HTTP requests.
  */
 interface PawapayConfigInterface
 {
@@ -63,4 +63,18 @@ interface PawapayConfigInterface
      * @return CountryCollection The authorized countries.
      */
     public function getCountries(): CountryCollection;
+
+    /**
+     * Return the Mobile Money providers allowed by the package's HTTP requests.
+     *
+     * @return ProviderCollection The authorized providers.
+     */
+    public function getProviders(): ProviderCollection;
+
+    /**
+     * Return the payer types allowed by the package's HTTP requests.
+     *
+     * @return PayerTypeCollection The authorized payer types.
+     */
+    public function getPayerTypes(): PayerTypeCollection;
 }

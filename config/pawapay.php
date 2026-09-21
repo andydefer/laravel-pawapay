@@ -5,6 +5,8 @@ declare(strict_types=1);
 use AndyDefer\PhpPawapay\Enums\Country;
 use AndyDefer\PhpPawapay\Enums\Currency;
 use AndyDefer\PhpPawapay\Enums\Language;
+use AndyDefer\PhpPawapay\Enums\PayerType;
+use AndyDefer\PhpPawapay\Enums\Provider;
 use AndyDefer\PhpPawapay\Services\PawapayService;
 
 return [
@@ -68,4 +70,26 @@ return [
     |
     */
     'countries' => Country::cases(),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Providers
+    |--------------------------------------------------------------------------
+    |
+    | Fournisseurs Mobile Money autorisés. Par défaut : toutes les cases de
+    | l'enum Provider.
+    |
+    */
+    'providers' => Provider::cases(),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Payer Types
+    |--------------------------------------------------------------------------
+    |
+    | Types de payeur autorisés. Par défaut : toutes les cases de l'enum
+    | PayerType.
+    |
+    */
+    'payer_types' => PayerType::cases(),
 ];

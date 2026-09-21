@@ -7,16 +7,14 @@ namespace AndyDefer\LaravelPawapay\Http\Requests;
 use AndyDefer\Actions\Http\Requests\AbstractRequest;
 use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
 use AndyDefer\LaravelPawapay\Contracts\PawapayConfigInterface;
-use AndyDefer\PhpPawapay\Enums\PayerType;
-use AndyDefer\PhpPawapay\Enums\Provider;
 use AndyDefer\PhpPawapay\Records\InitiateDepositRecord;
 use Illuminate\Validation\Rule;
 
 /**
  * Validates the payload used to initiate a Mobile Money deposit through PawaPay.
  *
- * Allowed currencies are sourced from the package configuration so the host
- * application can restrict the values accepted by the endpoint.
+ * Allowed currencies, providers and payer types are sourced from the package
+ * configuration so the host application can restrict the accepted values.
  */
 final class InitiateDepositRequest extends AbstractRequest
 {
@@ -36,10 +34,10 @@ final class InitiateDepositRequest extends AbstractRequest
         return [
             'deposit_id' => ['required', 'uuid'],
             'phone_number' => ['required', 'string', 'min:9', 'max:15'],
-            'provider' => ['required', Rule::enum(Provider::class)],
+            'provider' => ['required', Rule::in($this->config->getProviders()->toValues())],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'currency' => ['required', Rule::in($this->config->getCurrencies()->toValues())],
-            'payer_type' => ['required', Rule::enum(PayerType::class)],
+            'payer_type' => ['required', Rule::in($this->config->getPayerTypes()->toValues())],
             'pre_authorisation_code' => ['nullable', 'string'],
             'client_reference_id' => ['nullable', 'string', 'min:4', 'max:64'],
             'customer_message' => ['nullable', 'string', 'min:4', 'max:22'],

@@ -8,19 +8,22 @@ use AndyDefer\LaravelPawapay\Contracts\PawapayConfigInterface;
 use AndyDefer\PhpPawapay\Collections\CountryCollection;
 use AndyDefer\PhpPawapay\Collections\CurrencyCollection;
 use AndyDefer\PhpPawapay\Collections\LanguageCollection;
+use AndyDefer\PhpPawapay\Collections\PayerTypeCollection;
+use AndyDefer\PhpPawapay\Collections\ProviderCollection;
 use AndyDefer\PhpPawapay\Enums\Country;
 use AndyDefer\PhpPawapay\Enums\Currency;
 use AndyDefer\PhpPawapay\Enums\Language;
 use AndyDefer\PhpPawapay\Enums\PawaPayBaseUrl;
+use AndyDefer\PhpPawapay\Enums\PayerType;
+use AndyDefer\PhpPawapay\Enums\Provider;
 use AndyDefer\PhpPawapay\Services\PawapayService;
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
 
 /**
  * Default implementation of {@see PawapayConfigInterface}.
  *
- * Reads every PawaPay setting from the Laravel config repository under the
- * `pawapay` namespace, applies sensible fallbacks when a key is missing, and
- * exposes typed collections for currencies, languages and countries.
+ * Reads the package configuration from the Laravel config repository and
+ * exposes it through typed getters with sensible defaults.
  */
 final class PawapayConfig implements PawapayConfigInterface
 {
@@ -96,6 +99,26 @@ final class PawapayConfig implements PawapayConfigInterface
     {
         return CountryCollection::from(
             (array) $this->config->get('pawapay.countries', Country::cases()),
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getProviders(): ProviderCollection
+    {
+        return ProviderCollection::from(
+            (array) $this->config->get('pawapay.providers', Provider::cases()),
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getPayerTypes(): PayerTypeCollection
+    {
+        return PayerTypeCollection::from(
+            (array) $this->config->get('pawapay.payer_types', PayerType::cases()),
         );
     }
 }
