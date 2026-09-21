@@ -29,23 +29,23 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('pawapay')
     ->name('pawapay.')
     ->group(function (): void {
-        Route::post('/deposits', action_route(
+        Route::post('/initiate-deposit', action_route(
             InitiateDepositRequest::class,
             InitiateDepositAction::class,
-        ))->name('deposits.initiate');
+        ))->name('initiate-deposit');
 
-        Route::post('/deposits/status', action_route(
+        Route::post('/check-deposit-status', action_route(
             CheckDepositStatusRequest::class,
             CheckDepositStatusAction::class,
-        ))->name('deposits.status');
+        ))->name('check-deposit-status');
 
-        Route::post('/deposits/resend-callback', action_route(
+        Route::post('/resend-deposit-callback', action_route(
             ResendDepositCallbackRequest::class,
             ResendDepositCallbackAction::class,
-        ))->name('deposits.resend-callback');
+        ))->name('resend-deposit-callback');
 
-        Route::post('/payment-page', action_route(
+        Route::post('/create-payment-page', action_route(
             CreatePaymentPageRequest::class,
             CreatePaymentPageAction::class,
-        ))->name('payment-page');
+        ))->name('create-payment-page');
     });
