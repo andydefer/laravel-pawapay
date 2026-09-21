@@ -2,34 +2,70 @@
 
 declare(strict_types=1);
 
+use AndyDefer\PhpPawapay\Enums\Country;
+use AndyDefer\PhpPawapay\Enums\Currency;
+use AndyDefer\PhpPawapay\Enums\Language;
+use AndyDefer\PhpPawapay\Services\PawapayService;
+
 return [
     /*
     |--------------------------------------------------------------------------
-    | Pawapay API Configuration
+    | API Token
     |--------------------------------------------------------------------------
+    |
+    | Token d'authentification fourni par PawaPay.
+    |
     */
-
-    'api' => [
-        'sandbox_url' => env('PAWAPAY_SANDBOX_URL', 'https://api.sandbox.pawapay.io/v2'),
-        'production_url' => env('PAWAPAY_PRODUCTION_URL', 'https://api.pawapay.io/v2'),
-        'token' => env('PAWAPAY_API_TOKEN'),
-        'timeout' => env('PAWAPAY_TIMEOUT', 30),
-        'retry_times' => env('PAWAPAY_RETRY_TIMES', 3),
-        'retry_sleep' => env('PAWAPAY_RETRY_SLEEP', 100),
-    ],
+    'api_token' => env('PAWAPAY_API_TOKEN', ''),
 
     /*
     |--------------------------------------------------------------------------
-    | Application Settings
+    | Base URL
     |--------------------------------------------------------------------------
+    |
+    | Environnement ciblé : "sandbox" ou "production".
+    |
     */
+    'base_url' => env('PAWAPAY_BASE_URL', 'https://api.sandbox.pawapay.io/'),
 
-    'environment' => env('PAWAPAY_ENVIRONMENT', 'sandbox'),
+    /*
+    |--------------------------------------------------------------------------
+    | Service
+    |--------------------------------------------------------------------------
+    |
+    | FQCN du service PawaPay lié à PawapayInterface.
+    |
+    */
+    'service_fqcn' => PawapayService::class,
 
-    'defaults' => [
-        'headers' => [
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-        ],
-    ],
+    /*
+    |--------------------------------------------------------------------------
+    | Currencies
+    |--------------------------------------------------------------------------
+    |
+    | Devises autorisées. Par défaut : toutes les cases de l'enum Currency.
+    | Surcharger avec un tableau de valeurs (ex: ['USD', 'CDF']).
+    |
+    */
+    'currencies' => Currency::cases(),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Languages
+    |--------------------------------------------------------------------------
+    |
+    | Langues autorisées. Par défaut : toutes les cases de l'enum Language.
+    |
+    */
+    'languages' => Language::cases(),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Countries
+    |--------------------------------------------------------------------------
+    |
+    | Pays autorisés. Par défaut : toutes les cases de l'enum Country.
+    |
+    */
+    'countries' => Country::cases(),
 ];

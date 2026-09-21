@@ -1,0 +1,76 @@
+<?php
+
+declare(strict_types=1);
+
+namespace AndyDefer\LaravelPawapay\Http\Requests;
+
+use AndyDefer\Actions\Http\Requests\AbstractRequest;
+use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
+use AndyDefer\LaravelPawapay\Contracts\PawapayConfigInterface;
+use AndyDefer\PhpPawapay\Enums\PayerType;
+use AndyDefer\PhpPawapay\Enums\Provider;
+use AndyDefer\PhpPawapay\Records\InitiateDepositRecord;
+use Illuminate\Validation\Rule;
+
+/**
+ * Validates the payload used to initiate a Mobile Money deposit through PawaPay.
+ *
+ * Allowed currencies are sourced from the package configuration so the host
+ * application can restrict the values accepted by the endpoint.
+ */
+final class InitiateDepositRequest extends AbstractRequest
+{
+    public function __construct(
+        private readonly PawapayConfigInterface $config,
+    ) {
+        parent::__construct();
+    }
+
+    /**
+     * Return the validation rules for the request.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    public function rules(): array
+    {
+        return [
+            'deposit_id' => ['required', 'uuid'],
+            'phone_number' => ['required', 'string', 'min:9', 'max:15'],
+            'provider' => ['required', Rule::enum(Provider::class)],
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'currency' => ['required', Rule::in($this->config->getCurrencies()->toValues())],
+            'payer_type' => ['required', Rule::enum(PayerType::class)],
+            'pre_authorisation_code' => ['nullable', 'string'],
+            'client_reference_id' => ['nullable', 'string', 'min:4', 'max:64'],
+            'customer_message' => ['nullable', 'string', 'min:4', 'max:22'],
+            'metadata' => ['nullable', 'array', 'max:10'],
+        ];
+    }
+
+    /**
+     * Build the {@see InitiateDepositRecord} from the validated payload.
+     *
+     * @return AbstractRecord The typed record passed to the action.
+     */
+    public function getRecord(): AbstractRecord
+    {
+        $data = $this->validated();
+
+        return InitiateDepositRecord::from([
+            'depositId' => $data['deposit_id'],
+            'payer' => [
+                'type' => $data['payer_type'],
+                'accountDetails' => [
+                    'phoneNumber' => $data['phone_number'],
+                    'provider' => $data['provider'],
+                ],
+            ],
+            'amount' => $data['amount'],
+            'currency' => $data['currency'],
+            'preAuthorisationCode' => $data['pre_authorisation_code'] ?? null,
+            'clientReferenceId' => $data['client_reference_id'] ?? null,
+            'customerMessage' => $data['customer_message'] ?? null,
+            'metadata' => $data['metadata'] ?? null,
+        ]);
+    }
+}

@@ -3,13 +3,14 @@
 declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
+use Rector\ValueObject\PhpVersion;
 
 return RectorConfig::configure()
     ->withPaths([
-        __DIR__ . '/config',
-        __DIR__ . '/routes',
-        __DIR__ . '/src',
-        __DIR__ . '/tests',
+        __DIR__.'/config',
+        __DIR__.'/routes',
+        __DIR__.'/src',
+        __DIR__.'/tests',
     ])
     ->withTypeCoverageLevel(63)
     ->withDeadCodeLevel(55)
@@ -17,11 +18,11 @@ return RectorConfig::configure()
     ->withCodingStyleLevel(27)
     ->withCodeQualityLevel(77)
     ->withBootstrapFiles([
-        __DIR__ . '/vendor/autoload.php',
+        __DIR__.'/vendor/autoload.php',
     ])
-    ->withPhpVersion(\Rector\ValueObject\PhpVersion::PHP_83)
+    ->withPhpVersion(PhpVersion::PHP_83)
     ->withAutoloadPaths([
-        __DIR__ . '/vendor/autoload.php',
+        __DIR__.'/vendor/autoload.php',
     ])
     ->withAttributesSets(
         symfony: true,

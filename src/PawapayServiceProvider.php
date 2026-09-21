@@ -2,138 +2,111 @@
 
 declare(strict_types=1);
 
-namespace Pawapay;
+namespace AndyDefer\LaravelPawapay;
 
-use Illuminate\Contracts\Foundation\Application;
+use AndyDefer\LaravelPawapay\Configs\PawapayConfig;
+use AndyDefer\LaravelPawapay\Contracts\PawapayConfigInterface;
+use AndyDefer\PhpPawapay\Contracts\PawapayClientInterface;
+use AndyDefer\PhpPawapay\Contracts\PawapayInterface;
+use AndyDefer\PhpPawapay\PawapayClient;
+use AndyDefer\PhpPawapay\Services\PawapayService;
+use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Illuminate\Support\ServiceProvider;
-use Pawapay\Commands\GenerateTypesCommand;
-use Pawapay\Commands\InstallPawapayCommand;
-use Pawapay\Contracts\PawapayClientInterface;
-use Pawapay\Data\PawapayConfigData;
-use Pawapay\Services\PawapayClient;
-use Pawapay\Services\PawapayService;
-use Pawapay\Services\TypesGeneratorService;
 
-class PawapayServiceProvider extends ServiceProvider
+/**
+ * Registers the PawaPay configuration, HTTP client, and service into the
+ * Laravel container.
+ *
+ * The concrete service bound to {@see PawapayInterface} is resolved from
+ * the `pawapay.service_fqcn` configuration key, allowing host applications
+ * to swap the implementation without touching the package.
+ */
+final class PawapayServiceProvider extends ServiceProvider
 {
     /**
-     * Register services.
+     * Register container bindings.
      */
     public function register(): void
     {
         $this->mergeConfigFrom(
-            __DIR__ . '/../config/pawapay.php',
-            'pawapay'
+            __DIR__.'/../config/pawapay.php',
+            'pawapay',
         );
 
-        // Register the client
-        $this->app->singleton(PawapayClientInterface::class, function (Application $app): PawapayClient {
-            $config = $app->make('config');
-
-            $configData = new PawapayConfigData(
-                sandboxUrl: (string) $config->get('pawapay.api.sandbox_url', ''),
-                productionUrl: (string) $config->get('pawapay.api.production_url', ''),
-                token: (string) $config->get('pawapay.api.token', ''),
-                timeout: (int) $config->get('pawapay.api.timeout', 30),
-                retryTimes: (int) $config->get('pawapay.api.retry_times', 3),
-                retrySleep: (int) $config->get('pawapay.api.retry_sleep', 100),
-                environment: (string) $config->get('pawapay.environment', 'sandbox'),
-                defaultHeaders: $config->get('pawapay.defaults.headers', [
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json',
-                ]),
-            );
-
-            return new PawapayClient($configData);
-        });
-
-        // Register the main service
-        $this->app->singleton(PawapayService::class, function (Application $app): PawapayService {
-            return new PawapayService(
-                $app->make(PawapayClientInterface::class)
-            );
-        });
-
-        // Register types generator service
-        $this->app->singleton(TypesGeneratorService::class, function (): TypesGeneratorService {
-            return new TypesGeneratorService();
-        });
-
-        // Create aliases for convenient access
-        $this->app->alias(PawapayService::class, 'pawapay');
-        $this->app->alias(PawapayClientInterface::class, 'pawapay.client');
-        $this->app->alias(TypesGeneratorService::class, 'pawapay.types-generator');
+        $this->registerConfig();
+        $this->registerClient();
+        $this->registerService();
     }
 
     /**
-     * Bootstrap services.
+     * Publish the configuration and routes for the host application.
      */
     public function boot(): void
     {
-        $this->registerRoutes();
-        $this->registerPublishing();
-    }
-
-    /**
-     * Register the package routes.
-     */
-    protected function registerRoutes(): void
-    {
-        // Si les routes personnalisées existent (publiées par l'utilisateur), on les charge
-        $customRoutesPath = base_path('routes/pawapay.php');
-
-        if (file_exists($customRoutesPath)) {
-            $this->loadRoutesFrom($customRoutesPath);
+        if (! $this->app->runningInConsole()) {
             return;
         }
 
-        // Sinon, on charge les routes par défaut du package
-        $this->loadRoutesFrom(__DIR__ . '/routes/pawapay.php');
+        $this->publishes([
+            __DIR__.'/../config/pawapay.php' => config_path('pawapay.php'),
+        ], 'laravel-pawapay-config');
+
+        $this->publishes([
+            __DIR__.'/../routes/api.php' => base_path('routes/laravel-pawapay.php'),
+        ], 'laravel-pawapay-routes');
     }
 
     /**
-     * Register the package's publishable resources.
+     * Bind the package configuration.
      */
-    protected function registerPublishing(): void
+    private function registerConfig(): void
     {
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                GenerateTypesCommand::class,
-                InstallPawapayCommand::class,
-            ]);
+        $this->app->singleton(PawapayConfig::class, function ($app): PawapayConfig {
+            return new PawapayConfig(
+                $app->make(ConfigRepository::class),
+            );
+        });
 
-            // Configuration
-            $this->publishes([
-                __DIR__ . '/../config/pawapay.php' => config_path('pawapay.php'),
-            ], 'pawapay-config');
-
-            // Controller (publication du stub transformé en fichier PHP)
-            $this->publishes([
-                __DIR__ . '/stubs/controllers/PawapayController.stub' => app_path('Http/Controllers/Api/PawapayController.php'),
-            ], 'pawapay-controller');
-
-            // Routes personnalisées (optionnel)
-            $this->publishes([
-                __DIR__ . '/stubs/routes/pawapay-routes.stub' => base_path('routes/pawapay.php'),
-            ], 'pawapay-routes');
-
-            // NOTE: On ne publie plus les stubs TypeScript
-            // Les fichiers TypeScript sont générés directement par la commande
-        }
+        $this->app->bind(PawapayConfigInterface::class, PawapayConfig::class);
     }
 
     /**
-     * Get the services provided by the provider.
+     * Bind the low-level PawaPay HTTP client.
      */
-    public function provides(): array
+    private function registerClient(): void
     {
-        return [
-            PawapayClientInterface::class,
-            PawapayService::class,
-            TypesGeneratorService::class,
-            'pawapay',
-            'pawapay.client',
-            'pawapay.types-generator',
-        ];
+        $this->app->singleton(PawapayClient::class, function ($app): PawapayClient {
+            /** @var PawapayConfigInterface $config */
+            $config = $app->make(PawapayConfigInterface::class);
+
+            return new PawapayClient(
+                apiToken: $config->getApiToken(),
+                baseUrl: $config->getBaseUrl(),
+            );
+        });
+
+        $this->app->bind(PawapayClientInterface::class, PawapayClient::class);
+    }
+
+    /**
+     * Bind the application-level PawaPay service.
+     *
+     * The concrete class is resolved from the configuration, so the host
+     * application can substitute its own implementation.
+     */
+    private function registerService(): void
+    {
+        $this->app->singleton(PawapayService::class, function ($app): PawapayService {
+            return new PawapayService(
+                client: $app->make(PawapayClientInterface::class),
+            );
+        });
+
+        $this->app->bind(PawapayInterface::class, function ($app): PawapayInterface {
+            /** @var PawapayConfigInterface $config */
+            $config = $app->make(PawapayConfigInterface::class);
+
+            return $app->make($config->getServiceFqcn());
+        });
     }
 }
