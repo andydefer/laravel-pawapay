@@ -8,6 +8,8 @@ use AndyDefer\Actions\Actions\AbstractAction;
 use AndyDefer\Actions\Http\ResponseFactory;
 use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
 use AndyDefer\LaravelPawapay\Contracts\PawapayConfigInterface;
+use AndyDefer\PhpPawapay\Contracts\PawapayInterface;
+use AndyDefer\PhpPawapay\Datas\ErrorResponseData;
 use AndyDefer\PhpPawapay\Records\ResendDepositCallbackRecord;
 use Illuminate\Contracts\Container\Container;
 
@@ -16,6 +18,8 @@ use Illuminate\Contracts\Container\Container;
  *
  * Resolves the configured PawaPay service and forwards the validated
  * {@see ResendDepositCallbackRecord} to it, returning the resulting data as JSON.
+ * When the service returns an {@see ErrorResponseData}, the action uses the
+ * embedded HTTP status code instead of defaulting to 200.
  */
 final class ResendDepositCallbackAction extends AbstractAction
 {
@@ -28,15 +32,20 @@ final class ResendDepositCallbackAction extends AbstractAction
      * Handle the incoming request.
      *
      * @param  AbstractRecord  $request  Must be an instance of {@see ResendDepositCallbackRecord}.
-     * @return ResponseFactory JSON response wrapping the resend result data.
+     * @return ResponseFactory JSON response wrapping the resend result data or the error.
      */
     protected function handle(AbstractRecord $request): ResponseFactory
     {
         /** @var ResendDepositCallbackRecord $request */
+        /** @var PawapayInterface $service */
         $service = $this->container->make($this->config->getServiceFqcn());
 
-        return ResponseFactory::json(
-            $service->resendDepositCallback($request),
-        );
+        $result = $service->resendDepositCallback($request);
+
+        if ($result instanceof ErrorResponseData) {
+            return ResponseFactory::json($result, $result->status);
+        }
+
+        return ResponseFactory::json($result);
     }
 }

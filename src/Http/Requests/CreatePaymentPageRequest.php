@@ -6,6 +6,7 @@ namespace AndyDefer\LaravelPawapay\Http\Requests;
 
 use AndyDefer\Actions\Http\Requests\AbstractRequest;
 use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
+use AndyDefer\DomainStructures\Utils\StrictAssociative;
 use AndyDefer\LaravelPawapay\Contracts\PawapayConfigInterface;
 use AndyDefer\PhpPawapay\Records\CreatePaymentPageRecord;
 use Illuminate\Validation\Rule;
@@ -15,9 +16,30 @@ use Illuminate\Validation\Rule;
  *
  * Allowed currencies, languages, and countries are sourced from the package
  * configuration so the host application can restrict the accepted values.
+ *
+ * Fields not declared in the validation rules are collected into the `data`
+ * property of the record.
  */
 final class CreatePaymentPageRequest extends AbstractRequest
 {
+    /**
+     * Fields mapped to first-class record properties and excluded from the
+     * generic `data` bag.
+     *
+     * @var array<int, string>
+     */
+    private const RESERVED_FIELDS = [
+        'deposit_id',
+        'return_url',
+        'amount',
+        'currency',
+        'phone_number',
+        'language',
+        'country',
+        'customer_message',
+        'metadata',
+    ];
+
     public function __construct(
         private readonly PawapayConfigInterface $config,
     ) {
@@ -65,6 +87,27 @@ final class CreatePaymentPageRequest extends AbstractRequest
             'country' => $data['country'],
             'customerMessage' => $data['customer_message'] ?? null,
             'metadata' => $data['metadata'] ?? null,
+            'data' => $this->buildDataBag(),
         ]);
+    }
+
+    /**
+     * Collect every request field not reserved by the record into a strict
+     * associative bag.
+     *
+     * @return StrictAssociative|null The extra fields, or null when none are present.
+     */
+    private function buildDataBag(): ?StrictAssociative
+    {
+        $extra = array_diff_key(
+            $this->all(),
+            array_flip(self::RESERVED_FIELDS),
+        );
+
+        if ($extra === []) {
+            return null;
+        }
+
+        return StrictAssociative::from($extra);
     }
 }

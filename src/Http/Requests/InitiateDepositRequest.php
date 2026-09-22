@@ -6,6 +6,7 @@ namespace AndyDefer\LaravelPawapay\Http\Requests;
 
 use AndyDefer\Actions\Http\Requests\AbstractRequest;
 use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
+use AndyDefer\DomainStructures\Utils\StrictAssociative;
 use AndyDefer\LaravelPawapay\Contracts\PawapayConfigInterface;
 use AndyDefer\PhpPawapay\Records\InitiateDepositRecord;
 use Illuminate\Validation\Rule;
@@ -15,9 +16,32 @@ use Illuminate\Validation\Rule;
  *
  * Allowed currencies, providers and payer types are sourced from the package
  * configuration so the host application can restrict the accepted values.
+ *
+ * Fields not declared in the validation rules are collected into the `data`
+ * property of the record, so the host application can attach contextual
+ * information without extending the record.
  */
 final class InitiateDepositRequest extends AbstractRequest
 {
+    /**
+     * Fields that are mapped to first-class record properties and must not
+     * leak into the generic `data` bag.
+     *
+     * @var array<int, string>
+     */
+    private const RESERVED_FIELDS = [
+        'deposit_id',
+        'phone_number',
+        'provider',
+        'amount',
+        'currency',
+        'payer_type',
+        'pre_authorisation_code',
+        'client_reference_id',
+        'customer_message',
+        'metadata',
+    ];
+
     public function __construct(
         private readonly PawapayConfigInterface $config,
     ) {
@@ -48,6 +72,9 @@ final class InitiateDepositRequest extends AbstractRequest
     /**
      * Build the {@see InitiateDepositRecord} from the validated payload.
      *
+     * Every key present in the request but not listed in {@see self::RESERVED_FIELDS}
+     * is collected into the record's `data` property.
+     *
      * @return AbstractRecord The typed record passed to the action.
      */
     public function getRecord(): AbstractRecord
@@ -69,6 +96,27 @@ final class InitiateDepositRequest extends AbstractRequest
             'clientReferenceId' => $data['client_reference_id'] ?? null,
             'customerMessage' => $data['customer_message'] ?? null,
             'metadata' => $data['metadata'] ?? null,
+            'data' => $this->buildDataBag(),
         ]);
+    }
+
+    /**
+     * Collect every request field not reserved by the record into a strict
+     * associative bag.
+     *
+     * @return StrictAssociative|null The extra fields, or null when none are present.
+     */
+    private function buildDataBag(): ?StrictAssociative
+    {
+        $extra = array_diff_key(
+            $this->all(),
+            array_flip(self::RESERVED_FIELDS),
+        );
+
+        if ($extra === []) {
+            return null;
+        }
+
+        return StrictAssociative::from($extra);
     }
 }

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace AndyDefer\LaravelPawapay\Tests;
 
+use AndyDefer\Actions\ActionServiceProvider;
 use AndyDefer\LaravelPawapay\PawapayServiceProvider;
 use AndyDefer\PhpPawapay\Contracts\PawapayClientInterface;
 use AndyDefer\PhpPawapay\PawapayClient;
+use AndyDefer\PhpPawapay\Services\PawapayService;
 use Illuminate\Support\Facades\Route;
 use Orchestra\Testbench\TestCase as Orchestra;
 
@@ -25,6 +27,12 @@ abstract class IntegrationTestCase extends Orchestra
 
         $this->app->instance(PawapayClient::class, $this->client);
         $this->app->instance(PawapayClientInterface::class, $this->client);
+
+        $this->app->bind(PawapayService::class, function ($app): PawapayService {
+            return new PawapayService(
+                $app->make(PawapayClientInterface::class),
+            );
+        });
     }
 
     protected function tearDown(): void
@@ -37,6 +45,7 @@ abstract class IntegrationTestCase extends Orchestra
     {
         return [
             PawapayServiceProvider::class,
+            ActionServiceProvider::class,
         ];
     }
 
