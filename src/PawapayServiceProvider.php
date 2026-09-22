@@ -52,7 +52,7 @@ final class PawapayServiceProvider extends ServiceProvider
         ], 'laravel-pawapay-config');
 
         $this->publishes([
-            __DIR__.'/../routes/api.php' => base_path('routes/laravel-pawapay.php'),
+            __DIR__.'/../routes/api.php' => base_path('routes/pawapay.php'),
         ], 'laravel-pawapay-routes');
     }
 
