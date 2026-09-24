@@ -9,10 +9,12 @@ use AndyDefer\PhpPawapay\Datas\CheckDepositStatusData;
 use AndyDefer\PhpPawapay\Datas\CreatePaymentPageData;
 use AndyDefer\PhpPawapay\Datas\ErrorResponseData;
 use AndyDefer\PhpPawapay\Datas\InitiateDepositData;
+use AndyDefer\PhpPawapay\Datas\PredictProviderData;
 use AndyDefer\PhpPawapay\Datas\ResendDepositCallbackData;
 use AndyDefer\PhpPawapay\Records\CheckDepositStatusRecord;
 use AndyDefer\PhpPawapay\Records\CreatePaymentPageRecord;
 use AndyDefer\PhpPawapay\Records\InitiateDepositRecord;
+use AndyDefer\PhpPawapay\Records\PredictProviderRecord;
 use AndyDefer\PhpPawapay\Records\ResendDepositCallbackRecord;
 use AndyDefer\PhpPawapay\Services\PawapayService;
 
@@ -40,6 +42,10 @@ final class ErroringPawapayService extends PawapayService
     public ?ErrorResponseData $beforeCreatePaymentPageError = null;
 
     public ?ErrorResponseData $afterCreatePaymentPageError = null;
+
+    public ?ErrorResponseData $beforePredictProviderError = null;
+
+    public ?ErrorResponseData $afterPredictProviderError = null;
 
     public function __construct(PawapayClientInterface $client)
     {
@@ -108,5 +114,21 @@ final class ErroringPawapayService extends PawapayService
     protected function afterCreatePaymentPage(CreatePaymentPageRecord $record, CreatePaymentPageData $data): ?ErrorResponseData
     {
         return $this->afterCreatePaymentPageError;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function beforePredictProvider(PredictProviderRecord $record): ?ErrorResponseData
+    {
+        return $this->beforePredictProviderError;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function afterPredictProvider(PredictProviderRecord $record, PredictProviderData $data): ?ErrorResponseData
+    {
+        return $this->afterPredictProviderError;
     }
 }

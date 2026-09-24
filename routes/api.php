@@ -7,10 +7,12 @@ use AndyDefer\LaravelPawapay\Http\Actions\CallbackAction;
 use AndyDefer\LaravelPawapay\Http\Actions\CheckDepositStatusAction;
 use AndyDefer\LaravelPawapay\Http\Actions\CreatePaymentPageAction;
 use AndyDefer\LaravelPawapay\Http\Actions\InitiateDepositAction;
+use AndyDefer\LaravelPawapay\Http\Actions\PredictProviderAction;
 use AndyDefer\LaravelPawapay\Http\Actions\ResendDepositCallbackAction;
 use AndyDefer\LaravelPawapay\Http\Requests\CheckDepositStatusRequest;
 use AndyDefer\LaravelPawapay\Http\Requests\CreatePaymentPageRequest;
 use AndyDefer\LaravelPawapay\Http\Requests\InitiateDepositRequest;
+use AndyDefer\LaravelPawapay\Http\Requests\PredictProviderRequest;
 use AndyDefer\LaravelPawapay\Http\Requests\ResendDepositCallbackRequest;
 use Illuminate\Support\Facades\Route;
 
@@ -51,9 +53,13 @@ Route::prefix('pawapay')
             CreatePaymentPageAction::class,
         ))->name('create-payment-page');
 
+        Route::post('/predict-provider', action_route(
+            PredictProviderRequest::class,
+            PredictProviderAction::class,
+        ))->name('predict-provider');
+
         Route::post('/callback', action_route(
             EmptyRequest::class,
             CallbackAction::class,
         ))->name('callback');
-
     });
