@@ -6,6 +6,7 @@ use AndyDefer\LaravelPawapay\Callbacks\HandlesCallback;
 use AndyDefer\PhpPawapay\Enums\Country;
 use AndyDefer\PhpPawapay\Enums\Currency;
 use AndyDefer\PhpPawapay\Enums\Language;
+use AndyDefer\PhpPawapay\Enums\PawaPayBaseUrl;
 use AndyDefer\PhpPawapay\Enums\PayerType;
 use AndyDefer\PhpPawapay\Enums\Provider;
 use AndyDefer\PhpPawapay\Services\PawapayService;
@@ -13,23 +14,30 @@ use AndyDefer\PhpPawapay\Services\PawapayService;
 return [
     /*
     |--------------------------------------------------------------------------
-    | API Token
+    | Environment
     |--------------------------------------------------------------------------
     |
-    | Token d'authentification fourni par PawaPay.
+    | Environnement PawaPay ciblé. Détermine à la fois l'URL de base utilisée
+    | par le client HTTP et le token sélectionné dans la section `tokens`.
+    |
+    | Valeurs possibles : "sandbox" ou "production".
     |
     */
-    'api_token' => env('PAWAPAY_API_TOKEN', ''),
+    'environment' => env('PAWAPAY_ENVIRONMENT', PawaPayBaseUrl::SANDBOX->value),
 
     /*
     |--------------------------------------------------------------------------
-    | Base URL
+    | API Tokens
     |--------------------------------------------------------------------------
     |
-    | Environnement ciblé : "sandbox" ou "production".
+    | Un token par environnement. Le token sélectionné dépend de la valeur
+    | de la clé `environment` ci-dessus.
     |
     */
-    'base_url' => env('PAWAPAY_BASE_URL', 'https://api.sandbox.pawapay.io/'),
+    'tokens' => [
+        'sandbox' => env('PAWAPAY_SANDBOX_TOKEN', ''),
+        'production' => env('PAWAPAY_PRODUCTION_TOKEN', ''),
+    ],
 
     /*
     |--------------------------------------------------------------------------

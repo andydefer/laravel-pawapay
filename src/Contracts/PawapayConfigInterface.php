@@ -16,14 +16,21 @@ use AndyDefer\PhpPawapay\Enums\PawaPayBaseUrl;
 /**
  * Contract for the Laravel PawaPay package configuration.
  *
- * Exposes the API credentials, the base URL, the concrete service implementation,
- * the callback handler implementation, and the whitelists of allowed currencies,
- * languages, countries, providers and payer types used by the HTTP requests.
+ * Exposes the target environment, the API token for that environment, the
+ * base URL, the concrete service implementation, the callback handler
+ * implementation, and the whitelists of allowed currencies, languages,
+ * countries, providers and payer types used by the HTTP requests.
  */
 interface PawapayConfigInterface
 {
     /**
-     * Return the API token used to authenticate against PawaPay.
+     * Return the target PawaPay environment (sandbox or production).
+     */
+    public function getEnvironment(): PawaPayBaseUrl;
+
+    /**
+     * Return the API token used to authenticate against PawaPay for the
+     * current environment.
      */
     public function getApiToken(): string;
 

@@ -7,20 +7,9 @@ namespace AndyDefer\LaravelPawapay\Tests\Integration\Actions;
 use AndyDefer\Actions\Http\Requests\EmptyRequest;
 use AndyDefer\LaravelPawapay\Contracts\PawapayConfigInterface;
 use AndyDefer\LaravelPawapay\Http\Actions\CallbackAction;
+use AndyDefer\LaravelPawapay\Tests\Fixtures\Configs\TestPawapayConfig;
 use AndyDefer\LaravelPawapay\Tests\IntegrationTestCase;
-use AndyDefer\PhpPawapay\Collections\CountryCollection;
-use AndyDefer\PhpPawapay\Collections\CurrencyCollection;
-use AndyDefer\PhpPawapay\Collections\LanguageCollection;
-use AndyDefer\PhpPawapay\Collections\PayerTypeCollection;
-use AndyDefer\PhpPawapay\Collections\ProviderCollection;
 use AndyDefer\PhpPawapay\Contracts\Callbacks\HandlesCallbacksInterface;
-use AndyDefer\PhpPawapay\Enums\Country;
-use AndyDefer\PhpPawapay\Enums\Currency;
-use AndyDefer\PhpPawapay\Enums\Language;
-use AndyDefer\PhpPawapay\Enums\PawaPayBaseUrl;
-use AndyDefer\PhpPawapay\Enums\PayerType;
-use AndyDefer\PhpPawapay\Enums\Provider;
-use AndyDefer\PhpPawapay\Services\PawapayService;
 use AndyDefer\PhpPawapay\Structures\Callbacks\CheckoutCallbackStruct;
 use AndyDefer\PhpPawapay\Structures\Callbacks\DepositCallbackStruct;
 use AndyDefer\PhpPawapay\Structures\Callbacks\PayoutCallbackStruct;
@@ -114,7 +103,7 @@ final class CallbackActionTest extends IntegrationTestCase
     {
         // Arrange: bind a spy handler via config
         $handler = $this->spyHandler();
-        $this->bindHandleCallbackFqcn($handler::class, $handler);
+        $this->bindHandler($handler::class, $handler);
 
         // Act: send a valid deposit payload
         $response = $this->postJson('/api/pawapay-callback-action', self::DEPOSIT_PAYLOAD);
@@ -132,7 +121,7 @@ final class CallbackActionTest extends IntegrationTestCase
     {
         // Arrange
         $handler = $this->spyHandler();
-        $this->bindHandleCallbackFqcn($handler::class, $handler);
+        $this->bindHandler($handler::class, $handler);
 
         // Act
         $response = $this->postJson('/api/pawapay-callback-action', self::PAYOUT_PAYLOAD);
@@ -147,7 +136,7 @@ final class CallbackActionTest extends IntegrationTestCase
     {
         // Arrange
         $handler = $this->spyHandler();
-        $this->bindHandleCallbackFqcn($handler::class, $handler);
+        $this->bindHandler($handler::class, $handler);
 
         // Act
         $response = $this->postJson('/api/pawapay-callback-action', self::REFUND_PAYLOAD);
@@ -162,7 +151,7 @@ final class CallbackActionTest extends IntegrationTestCase
     {
         // Arrange
         $handler = $this->spyHandler();
-        $this->bindHandleCallbackFqcn($handler::class, $handler);
+        $this->bindHandler($handler::class, $handler);
 
         // Act
         $response = $this->postJson('/api/pawapay-callback-action', self::CHECKOUT_PAYLOAD);
@@ -177,7 +166,7 @@ final class CallbackActionTest extends IntegrationTestCase
     {
         // Arrange: the checkout payload contains both checkoutId and an inner deposit
         $handler = $this->spyHandler();
-        $this->bindHandleCallbackFqcn($handler::class, $handler);
+        $this->bindHandler($handler::class, $handler);
 
         // Act
         $response = $this->postJson('/api/pawapay-callback-action', self::CHECKOUT_PAYLOAD);
@@ -192,7 +181,7 @@ final class CallbackActionTest extends IntegrationTestCase
     {
         // Arrange
         $handler = $this->spyHandler();
-        $this->bindHandleCallbackFqcn($handler::class, $handler);
+        $this->bindHandler($handler::class, $handler);
 
         // Act: send a payload with none of the discriminating fields
         $response = $this->postJson('/api/pawapay-callback-action', [
@@ -205,61 +194,16 @@ final class CallbackActionTest extends IntegrationTestCase
 
     /**
      * Bind a handler instance into the container and expose its FQCN
-     * through the PawapayConfigInterface.
+     * through a {@see TestPawapayConfig}.
      */
-    private function bindHandleCallbackFqcn(string $fqcn, HandlesCallbacksInterface $handler): void
+    private function bindHandler(string $fqcn, HandlesCallbacksInterface $handler): void
     {
         $this->app->instance($fqcn, $handler);
 
-        $this->app->instance(PawapayConfigInterface::class, new class($fqcn) implements PawapayConfigInterface
-        {
-            public function __construct(private readonly string $fqcn) {}
+        $config = new TestPawapayConfig;
+        $config->handleCallbackFqcn = $fqcn;
 
-            public function getApiToken(): string
-            {
-                return 'test-token';
-            }
-
-            public function getBaseUrl(): PawaPayBaseUrl
-            {
-                return PawaPayBaseUrl::SANDBOX;
-            }
-
-            public function getServiceFqcn(): string
-            {
-                return PawapayService::class;
-            }
-
-            public function getHandleCallbackFqcn(): string
-            {
-                return $this->fqcn;
-            }
-
-            public function getCurrencies(): CurrencyCollection
-            {
-                return CurrencyCollection::from([Currency::ZMW]);
-            }
-
-            public function getLanguages(): LanguageCollection
-            {
-                return LanguageCollection::from([Language::EN]);
-            }
-
-            public function getCountries(): CountryCollection
-            {
-                return CountryCollection::from([Country::ZMB]);
-            }
-
-            public function getProviders(): ProviderCollection
-            {
-                return ProviderCollection::from([Provider::MTN_MOMO_ZMB]);
-            }
-
-            public function getPayerTypes(): PayerTypeCollection
-            {
-                return PayerTypeCollection::from([PayerType::MMO]);
-            }
-        });
+        $this->app->instance(PawapayConfigInterface::class, $config);
     }
 
     /**

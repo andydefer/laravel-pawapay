@@ -25,16 +25,29 @@ use Illuminate\Contracts\Config\Repository as ConfigRepository;
  *
  * Reads the package configuration from the Laravel config repository and
  * exposes it through typed getters with sensible defaults.
+ *
+ * The API token is resolved from the `tokens` map using the current
+ * environment as key. Switching `environment` in the config is enough to
+ * switch both the base URL and the token.
  */
 final class PawapayConfig implements PawapayConfigInterface
 {
-    private const DEFAULT_API_TOKEN = '';
+    private const DEFAULT_ENVIRONMENT = PawaPayBaseUrl::SANDBOX;
 
-    private const DEFAULT_BASE_URL = PawaPayBaseUrl::SANDBOX;
+    private const DEFAULT_API_TOKEN = '';
 
     private const DEFAULT_SERVICE_FQCN = PawapayService::class;
 
     private const DEFAULT_HANDLE_CALLBACK_FQCN = HandlesCallback::class;
+
+    /**
+     * Maps the environment enum to the key used in the `pawapay.tokens`
+     * configuration array.
+     */
+    private const TOKEN_KEYS = [
+        PawaPayBaseUrl::SANDBOX->value => 'sandbox',
+        PawaPayBaseUrl::PRODUCTION->value => 'production',
+    ];
 
     public function __construct(
         private readonly ConfigRepository $config,
@@ -43,10 +56,26 @@ final class PawapayConfig implements PawapayConfigInterface
     /**
      * {@inheritDoc}
      */
+    public function getEnvironment(): PawaPayBaseUrl
+    {
+        $raw = (string) $this->config->get(
+            'pawapay.environment',
+            self::DEFAULT_ENVIRONMENT->value,
+        );
+
+        return PawaPayBaseUrl::tryFrom($raw) ?? self::DEFAULT_ENVIRONMENT;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getApiToken(): string
     {
+        $environment = $this->getEnvironment();
+        $key = self::TOKEN_KEYS[$environment->value] ?? 'sandbox';
+
         return (string) $this->config->get(
-            'pawapay.api_token',
+            "pawapay.tokens.{$key}",
             self::DEFAULT_API_TOKEN,
         );
     }
@@ -56,12 +85,7 @@ final class PawapayConfig implements PawapayConfigInterface
      */
     public function getBaseUrl(): PawaPayBaseUrl
     {
-        $raw = (string) $this->config->get(
-            'pawapay.base_url',
-            self::DEFAULT_BASE_URL->value,
-        );
-
-        return PawaPayBaseUrl::tryFrom($raw) ?? self::DEFAULT_BASE_URL;
+        return $this->getEnvironment();
     }
 
     /**
