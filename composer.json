@@ -47,7 +47,7 @@
     "prefer-stable": true,
     "require": {
         "php": "^8.1",
-        "andydefer/php-pawapay": "^0.13.0",
+        "andydefer/php-pawapay": "^0.14.0",
         "andydefer/laravel-actions": "^2.11.13"
     },
     "require-dev": {
