@@ -10,7 +10,6 @@ use AndyDefer\PhpPawapay\Contracts\PawapayClientInterface;
 use AndyDefer\PhpPawapay\Contracts\PawapayInterface;
 use AndyDefer\PhpPawapay\PawapayClient;
 use AndyDefer\PhpPawapay\Services\PawapayService;
-use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -63,7 +62,7 @@ final class PawapayServiceProvider extends ServiceProvider
     {
         $this->app->singleton(PawapayConfig::class, function ($app): PawapayConfig {
             return new PawapayConfig(
-                $app->make(ConfigRepository::class),
+                $app['config'],
             );
         });
 
