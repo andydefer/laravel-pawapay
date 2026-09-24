@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AndyDefer\LaravelPawapay\Configs;
 
+use AndyDefer\LaravelPawapay\Callbacks\HandlesCallback;
 use AndyDefer\LaravelPawapay\Contracts\PawapayConfigInterface;
 use AndyDefer\PhpPawapay\Collections\CountryCollection;
 use AndyDefer\PhpPawapay\Collections\CurrencyCollection;
@@ -32,6 +33,8 @@ final class PawapayConfig implements PawapayConfigInterface
     private const DEFAULT_BASE_URL = PawaPayBaseUrl::SANDBOX;
 
     private const DEFAULT_SERVICE_FQCN = PawapayService::class;
+
+    private const DEFAULT_HANDLE_CALLBACK_FQCN = HandlesCallback::class;
 
     public function __construct(
         private readonly ConfigRepository $config,
@@ -69,6 +72,17 @@ final class PawapayConfig implements PawapayConfigInterface
         return (string) $this->config->get(
             'pawapay.service_fqcn',
             self::DEFAULT_SERVICE_FQCN,
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getHandleCallbackFqcn(): string
+    {
+        return (string) $this->config->get(
+            'pawapay.handle_callback_fqcn',
+            self::DEFAULT_HANDLE_CALLBACK_FQCN,
         );
     }
 

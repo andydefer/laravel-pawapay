@@ -14,9 +14,10 @@
 6. [Contrats et extension](#6-contrats-et-extension)
 7. [Hooks du service PawaPay](#7-hooks-du-service-pawapay)
 8. [Gestion des erreurs](#8-gestion-des-erreurs)
-9. [Tests](#9-tests)
-10. [Sécurité](#10-sécurité)
-11. [Compatibilité](#11-compatibilité)
+9. [Traitement des callbacks entrants](#9-traitement-des-callbacks-entrants)
+10. [Tests](#10-tests)
+11. [Sécurité](#11-sécurité)
+12. [Compatibilité](#12-compatibilité)
 
 ---
 
@@ -30,18 +31,18 @@ Le package s'appuie sur `andydefer/php-pawapay`, qui contient toute la logique m
 
 ### Ce que le package fournit
 
-- **4 endpoints HTTP** : initier un dépôt, vérifier un dépôt, renvoyer un webhook, créer une page de paiement.
+- **5 endpoints HTTP** : initier un dépôt, vérifier un dépôt, renvoyer un webhook, créer une page de paiement, recevoir un callback PawaPay.
 - **4 `FormRequest`** : validation stricte, application des whitelists et construction de `Record` typés. Chaque `Record` expose un `data` bag optionnel pour porter les champs non réservés.
-- **4 `Action`** : résolvent le service PawaPay via la configuration, appellent l'opération correspondante et renvoient une `Data` typée. Si le service retourne une `ErrorResponseData`, l'action propage le code HTTP porté par cette erreur.
-- **Une configuration unique** : token, URL, `service_fqcn`, devises, langues, pays, providers et types de payeur autorisés.
-- **Un point d'extension** : remplacer entièrement le service PawaPay via `service_fqcn` sans modifier le package.
+- **5 `Action`** : résolvent le service PawaPay via la configuration, appellent l'opération correspondante et renvoient une `Data` typée. Si le service retourne une `ErrorResponseData`, l'action propage le code HTTP porté par cette erreur.
+- **Une configuration unique** : token, URL, `service_fqcn`, `handle_callback_fqcn`, devises, langues, pays, providers et types de payeur autorisés.
+- **Deux points d'extension** : remplacer le service PawaPay (`service_fqcn`) ou le handler de callbacks (`handle_callback_fqcn`) sans modifier le package.
 - **Des hooks applicatifs** : le service `php-pawapay` expose des points d'extension `before*` / `after*` sur les quatre opérations. Voir section 7.
 
 ### Ce que le package ne fait pas
 
 - Aucune authentification. Les routes sont publiées sans middleware.
 - Aucune persistance. Le package ne touche pas à la base de données.
-- Aucune gestion de webhook entrant. Seul l'appel sortant vers PawaPay est exposé.
+- Aucune vérification de signature de callback. Le handler applicatif en est responsable.
 
 ---
 
@@ -85,6 +86,7 @@ Tu contrôles ainsi le préfixe, les middlewares et l'ordre de chargement.
 
 declare(strict_types=1);
 
+use AndyDefer\LaravelPawapay\Callbacks\HandlesCallback;
 use AndyDefer\PhpPawapay\Enums\Country;
 use AndyDefer\PhpPawapay\Enums\Currency;
 use AndyDefer\PhpPawapay\Enums\Language;
@@ -96,6 +98,7 @@ return [
     'api_token' => env('PAWAPAY_API_TOKEN', ''),
     'base_url' => env('PAWAPAY_BASE_URL', 'https://api.sandbox.pawapay.io/'),
     'service_fqcn' => PawapayService::class,
+    'handle_callback_fqcn' => HandlesCallback::class,
     'currencies' => Currency::cases(),
     'languages' => Language::cases(),
     'countries' => Country::cases(),
@@ -111,6 +114,7 @@ return [
 | `api_token` | `string` | `''` | Token d'authentification fourni par PawaPay |
 | `base_url` | `string` | URL sandbox | URL de base de l'API PawaPay |
 | `service_fqcn` | `class-string` | `PawapayService::class` | Implémentation de `PawapayInterface` |
+| `handle_callback_fqcn` | `class-string` | `HandlesCallback::class` | Implémentation de `HandlesCallbacksInterface` |
 | `currencies` | `array<int, Currency\|string>` | Toutes les cases | Devises acceptées par les `FormRequest` |
 | `languages` | `array<int, Language\|string>` | Toutes les cases | Langues acceptées par les `FormRequest` |
 | `countries` | `array<int, Country\|string>` | Toutes les cases | Pays acceptés par les `FormRequest` |
@@ -151,6 +155,7 @@ return [
     'api_token' => env('PAWAPAY_API_TOKEN', ''),
     'base_url' => env('PAWAPAY_BASE_URL', 'https://api.sandbox.pawapay.io/'),
     'service_fqcn' => \App\Services\AfyaPawapayService::class,
+    'handle_callback_fqcn' => \App\Callbacks\AfyaPawapayHandler::class,
 
     'currencies' => [Currency::USD, Currency::CDF],
     'languages' => [Language::FR],
@@ -168,7 +173,7 @@ return [
 
 ## 4. Routes exposées
 
-Le fichier `routes/laravel-pawapay.php` déclare quatre endpoints, tous en `POST`, sous le préfixe `pawapay`.
+Le fichier `routes/laravel-pawapay.php` déclare cinq endpoints, tous en `POST`, sous le préfixe `pawapay`.
 
 | Méthode | URI | Nom | Description |
 |---------|-----|-----|-------------|
@@ -176,6 +181,13 @@ Le fichier `routes/laravel-pawapay.php` déclare quatre endpoints, tous en `POST
 | POST | `/pawapay/check-deposit-status` | `pawapay.check-deposit-status` | Vérifier l'état d'un dépôt |
 | POST | `/pawapay/resend-deposit-callback` | `pawapay.resend-deposit-callback` | Renvoyer le webhook d'un dépôt |
 | POST | `/pawapay/create-payment-page` | `pawapay.create-payment-page` | Créer une page de paiement hébergée |
+| POST | `/pawapay/callback` | `pawapay.callback` | Recevoir un callback PawaPay |
+
+### Note sur la route callback
+
+La route callback utilise `EmptyRequest` (du package `laravel-actions`) et non un `FormRequest` dédié. Pawapay n'est pas un client à valider : le payload est vérifié par le handler applicatif (`handle_callback_fqcn`), pas par les règles Laravel.
+
+> **Ne protège pas la route callback** avec `auth:sanctum`. C'est Pawapay qui l'appelle en externe. La sécurité repose sur la vérification de signature dans le handler.
 
 ---
 
@@ -345,7 +357,7 @@ Redirige l'utilisateur vers `redirectUrl` pour qu'il effectue le paiement.
 
 ### 6.1 `PawapayConfigInterface`
 
-Contrat de la configuration. Utilisé par les `Action` pour résoudre le service et par les `FormRequest` pour valider les valeurs autorisées.
+Contrat de la configuration. Utilisé par les `Action` pour résoudre le service et le handler, et par les `FormRequest` pour valider les valeurs autorisées.
 
 ```php
 <?php
@@ -369,6 +381,8 @@ interface PawapayConfigInterface
 
     public function getServiceFqcn(): string;
 
+    public function getHandleCallbackFqcn(): string;
+
     public function getCurrencies(): CurrencyCollection;
 
     public function getLanguages(): LanguageCollection;
@@ -388,17 +402,34 @@ Contrat du service PawaPay. Les `Action` ne connaissent que cette interface.
 ```php
 interface PawapayInterface
 {
-    public function initiateDeposit(InitiateDepositRecord $record): InitiateDepositData;
+    public function initiateDeposit(InitiateDepositRecord $record): InitiateDepositData|ErrorResponseData;
 
-    public function checkDepositStatus(CheckDepositStatusRecord $record): CheckDepositStatusData;
+    public function checkDepositStatus(CheckDepositStatusRecord $record): CheckDepositStatusData|ErrorResponseData;
 
-    public function resendDepositCallback(ResendDepositCallbackRecord $record): ResendDepositCallbackData;
+    public function resendDepositCallback(ResendDepositCallbackRecord $record): ResendDepositCallbackData|ErrorResponseData;
 
-    public function createPaymentPage(CreatePaymentPageRecord $record): CreatePaymentPageData;
+    public function createPaymentPage(CreatePaymentPageRecord $record): CreatePaymentPageData|ErrorResponseData;
 }
 ```
 
-### 6.3 Remplacer le service PawaPay
+### 6.3 `HandlesCallbacksInterface`
+
+Contrat du handler de callbacks entrants. Quatre méthodes, une par type d'opération.
+
+```php
+interface HandlesCallbacksInterface
+{
+    public function handleDeposit(DepositCallbackStruct $struct): void;
+
+    public function handlePayout(PayoutCallbackStruct $struct): void;
+
+    public function handleRefund(RefundCallbackStruct $struct): void;
+
+    public function handleCheckout(CheckoutCallbackStruct $struct): void;
+}
+```
+
+### 6.4 Remplacer le service PawaPay
 
 **Option A — Modifier `service_fqcn`.**
 
@@ -420,7 +451,32 @@ $this->app->bind(PawapayInterface::class, AfyaPawapayService::class);
 
 L'option B n'a d'effet que si `service_fqcn` reste égal à `PawapayService::class`.
 
-### 6.4 Le `data` bag des `Record`
+### 6.5 Remplacer le handler de callbacks
+
+**Option A — Modifier `handle_callback_fqcn`.**
+
+```php
+// config/pawapay.php
+'handle_callback_fqcn' => \App\Callbacks\AfyaPawapayHandler::class,
+```
+
+La classe doit implémenter `HandlesCallbacksInterface` et avoir un constructeur auto-résolvable.
+
+**Option B — Étendre `HandlesCallback`.**
+
+Le package fournit un stub vide `AndyDefer\LaravelPawapay\Callbacks\HandlesCallback`. Étends-le pour ne surcharger que les méthodes utiles.
+
+```php
+final class AfyaPawapayHandler extends HandlesCallback
+{
+    public function handleDeposit(DepositCallbackStruct $struct): void
+    {
+        // Traitement spécifique au dépôt
+    }
+}
+```
+
+### 6.6 Le `data` bag des `Record`
 
 Chaque `FormRequest` construit un `Record` avec un `data` bag optionnel. Ce bag contient tous les champs présents dans la requête mais non listés dans `rules()`. Il permet à l'application hôte d'attacher des informations contextuelles (identifiant interne, marqueur, note) sans étendre le `Record` du SDK.
 
@@ -443,7 +499,7 @@ Chaque `FormRequest` construit un `Record` avec un `data` bag optionnel. Ce bag 
 
 ## 7. Hooks du service PawaPay
 
-Le service `andydefer/php-pawapay` expose huit hooks `protected` — deux par opération — que l'application hôte peut surcharger pour greffer sa logique métier sans réécrire le comportement PawaPay.
+Le service `andydefer/php-pawapay` expose dix hooks `protected` — deux par opération + deux pour les callbacks — que l'application hôte peut surcharger pour greffer sa logique métier sans réécrire le comportement PawaPay.
 
 Les hooks sont appelés dans cet ordre, à chaque invocation de l'opération :
 
@@ -465,14 +521,16 @@ return Data
 
 | Hook | Signature | Déclenché |
 |------|-----------|-----------|
-| `beforeInitiateDeposit` | `(InitiateDepositRecord $record): void` | Avant l'appel `initiateDeposit` |
-| `afterInitiateDeposit` | `(InitiateDepositRecord $record, InitiateDepositData $data): void` | Après l'appel `initiateDeposit` |
-| `beforeCheckDepositStatus` | `(CheckDepositStatusRecord $record): void` | Avant l'appel `checkDepositStatus` |
-| `afterCheckDepositStatus` | `(CheckDepositStatusRecord $record, CheckDepositStatusData $data): void` | Après l'appel `checkDepositStatus` |
-| `beforeResendDepositCallback` | `(ResendDepositCallbackRecord $record): void` | Avant l'appel `resendDepositCallback` |
-| `afterResendDepositCallback` | `(ResendDepositCallbackRecord $record, ResendDepositCallbackData $data): void` | Après l'appel `resendDepositCallback` |
-| `beforeCreatePaymentPage` | `(CreatePaymentPageRecord $record): void` | Avant l'appel `createPaymentPage` |
-| `afterCreatePaymentPage` | `(CreatePaymentPageRecord $record, CreatePaymentPageData $data): void` | Après l'appel `createPaymentPage` |
+| `beforeInitiateDeposit` | `(InitiateDepositRecord $record): ?ErrorResponseData` | Avant l'appel `initiateDeposit` |
+| `afterInitiateDeposit` | `(InitiateDepositRecord $record, InitiateDepositData $data): ?ErrorResponseData` | Après l'appel `initiateDeposit` |
+| `beforeCheckDepositStatus` | `(CheckDepositStatusRecord $record): ?ErrorResponseData` | Avant l'appel `checkDepositStatus` |
+| `afterCheckDepositStatus` | `(CheckDepositStatusRecord $record, CheckDepositStatusData $data): ?ErrorResponseData` | Après l'appel `checkDepositStatus` |
+| `beforeResendDepositCallback` | `(ResendDepositCallbackRecord $record): ?ErrorResponseData` | Avant l'appel `resendDepositCallback` |
+| `afterResendDepositCallback` | `(ResendDepositCallbackRecord $record, ResendDepositCallbackData $data): ?ErrorResponseData` | Après l'appel `resendDepositCallback` |
+| `beforeCreatePaymentPage` | `(CreatePaymentPageRecord $record): ?ErrorResponseData` | Avant l'appel `createPaymentPage` |
+| `afterCreatePaymentPage` | `(CreatePaymentPageRecord $record, CreatePaymentPageData $data): ?ErrorResponseData` | Après l'appel `createPaymentPage` |
+| `beforeHandleCallback` | `(Struct $struct, CallbackOperationType $operation): void` | Avant le dispatch d'un callback |
+| `afterHandleCallback` | `(Struct $struct, CallbackOperationType $operation): void` | Après le dispatch d'un callback |
 
 ### 7.2 Créer un service applicatif
 
@@ -483,9 +541,11 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use AndyDefer\PhpPawapay\Datas\ErrorResponseData;
 use AndyDefer\PhpPawapay\Datas\InitiateDepositData;
 use AndyDefer\PhpPawapay\Records\InitiateDepositRecord;
 use AndyDefer\PhpPawapay\Services\PawapayService;
+use AndyDefer\PhpVo\Enums\HttpStatusCode;
 
 /**
  * Afya-specific PawaPay service.
@@ -495,14 +555,23 @@ use AndyDefer\PhpPawapay\Services\PawapayService;
  */
 final class AfyaPawapayService extends PawapayService
 {
-    protected function beforeInitiateDeposit(InitiateDepositRecord $record): void
+    protected function beforeInitiateDeposit(InitiateDepositRecord $record): ?ErrorResponseData
     {
-        // Par exemple : vérifier que le contexte applicatif est cohérent.
+        if ($record->amount->toFloat() > 10_000) {
+            return ErrorResponseData::from([
+                'message' => 'Montant trop élevé',
+                'status' => HttpStatusCode::FORBIDDEN,
+                'errorCode' => 'AMOUNT_TOO_HIGH',
+            ]);
+        }
+
+        return null;
     }
 
-    protected function afterInitiateDeposit(InitiateDepositRecord $record, InitiateDepositData $data): void
+    protected function afterInitiateDeposit(InitiateDepositRecord $record, InitiateDepositData $data): ?ErrorResponseData
     {
         // Par exemple : persister la tentative de dépôt et notifier l'utilisateur.
+        return null;
     }
 }
 ```
@@ -519,20 +588,22 @@ Les `Action` du package résolvent automatiquement cette classe via le conteneur
 ### 7.3 Accéder au `data` bag depuis un hook
 
 ```php
-protected function beforeInitiateDeposit(InitiateDepositRecord $record): void
+protected function beforeInitiateDeposit(InitiateDepositRecord $record): ?ErrorResponseData
 {
     $orderId = $record->data?->get('order_id');
 
     if ($orderId !== null) {
         // Résoudre la commande applicative à partir de l'identifiant transmis par le client.
     }
+
+    return null;
 }
 ```
 
 ### 7.4 Ce qu'il ne faut pas faire dans un hook
 
 - Émettre un appel HTTP vers PawaPay : ce n'est pas le rôle du hook, et cela provoquerait un double appel.
-- Lever une exception pour « annuler » l'opération : les hooks `before*` peuvent techniquement le faire, mais ce comportement n'est pas prévu par le contrat. Si tu as besoin d'une validation qui bloque l'appel, place-la dans la `FormRequest`.
+- Lever une exception pour « annuler » l'opération : préférer le retour d'un `ErrorResponseData` pour un court-circuit contrôlé. Les exceptions doivent rester réservées aux cas réellement exceptionnels.
 - Modifier la `Data` : elle est `readonly`. Un hook `after*` observe le résultat, il ne le transforme pas.
 
 ---
@@ -630,12 +701,116 @@ Codes d'erreur possibles :
 Levées par le conteneur ou le service si :
 
 - `service_fqcn` n'est pas résolvable (`BindingResolutionException`) ;
-- l'implémentation n'implémente pas `PawapayInterface` (`TypeError`) ;
+- `handle_callback_fqcn` n'est pas résolvable (`BindingResolutionException`) ;
+- l'implémentation n'implémente pas le contrat attendu (`TypeError`) ;
 - une erreur réseau se produit dans le SDK sous-jacent.
 
 ---
 
-## 9. Tests
+## 9. Traitement des callbacks entrants
+
+Pawapay envoie les callbacks (deposit, payout, refund, checkout) sur l'endpoint unique `POST /pawapay/callback`. Le SDK détecte l'opération à partir des champs présents dans le payload et dispatche vers la méthode correspondante du handler.
+
+### 9.1 Comportement du package
+
+`CallbackAction` :
+
+1. Lit le payload brut depuis la `Request` injectée.
+2. Détecte l'opération via `CallbackOperationType::fromPayload()`.
+3. Hydrate le `Struct` correspondant.
+4. Résout le service via `service_fqcn` et le handler via `handle_callback_fqcn`.
+5. Appelle `$service->handleCallback($struct, $handler)`.
+6. Retourne `204 No Content`.
+
+### 9.2 Champs discriminants
+
+| Champ discriminant | Opération | Ordre de vérification |
+|--------------------|-----------|-----------------------|
+| `checkoutId` | `CHECKOUT` | 1 (prioritaire) |
+| `depositId` | `DEPOSIT` | 2 |
+| `payoutId` | `PAYOUT` | 3 |
+| `refundId` | `REFUND` | 4 |
+
+`checkoutId` est vérifié en premier car un checkout contient aussi un objet `deposit` imbriqué.
+
+### 9.3 Écrire un handler
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Callbacks;
+
+use AndyDefer\LaravelPawapay\Callbacks\HandlesCallback;
+use AndyDefer\PhpPawapay\Structures\Callbacks\CheckoutCallbackStruct;
+use AndyDefer\PhpPawapay\Structures\Callbacks\DepositCallbackStruct;
+use AndyDefer\PhpPawapay\Structures\Callbacks\PayoutCallbackStruct;
+use AndyDefer\PhpPawapay\Structures\Callbacks\RefundCallbackStruct;
+
+final class AfyaPawapayHandler extends HandlesCallback
+{
+    public function handleDeposit(DepositCallbackStruct $struct): void
+    {
+        // 1. Vérifier la signature du callback
+        // 2. Dédupliquer par depositId
+        // 3. Persister le paiement
+        // 4. Notifier le client
+    }
+
+    public function handleCheckout(CheckoutCallbackStruct $struct): void
+    {
+        // Traiter les checkouts
+    }
+}
+```
+
+Puis déclare-le :
+
+```php
+// config/pawapay.php
+'handle_callback_fqcn' => \App\Callbacks\AfyaPawapayHandler::class,
+```
+
+### 9.4 Sécurité des callbacks
+
+Le package **ne fait pas** :
+
+- la vérification de signature (HMAC, JWT, signature HTTP) ;
+- la déduplication (idempotence) ;
+- la whitelist d'IP source.
+
+Ces trois responsabilités doivent être implémentées dans le handler (`handle_callback_fqcn`) **avant** de traiter le callback. Une exception levée dans le handler se traduit par un `500`, ce qui indique à Pawapay de réessayer.
+
+### 9.5 Idempotence recommandée
+
+Utilise une table `processed_callbacks` avec une contrainte unique sur l'identifiant du callback (`depositId`, `payoutId`, `refundId` ou `checkoutId`) :
+
+```php
+public function handleDeposit(DepositCallbackStruct $struct): void
+{
+    $alreadyProcessed = ProcessedCallback::where('external_id', $struct->depositId->getValue())
+        ->where('operation', 'deposit')
+        ->exists();
+
+    if ($alreadyProcessed) {
+        return;
+    }
+
+    DB::transaction(function () use ($struct) {
+        ProcessedCallback::create([
+            'external_id' => $struct->depositId->getValue(),
+            'operation' => 'deposit',
+        ]);
+
+        // Traitement métier
+    });
+}
+```
+
+---
+
+## 10. Tests
 
 ```bash
 composer test
@@ -683,6 +858,11 @@ final class RestrictedPawapayConfig implements PawapayConfigInterface
         return PawapayService::class;
     }
 
+    public function getHandleCallbackFqcn(): string
+    {
+        return \AndyDefer\LaravelPawapay\Callbacks\HandlesCallback::class;
+    }
+
     public function getCurrencies(): CurrencyCollection
     {
         return CurrencyCollection::from([Currency::USD]);
@@ -718,9 +898,10 @@ $this->app->instance(PawapayConfigInterface::class, new RestrictedPawapayConfig)
 
 ---
 
-## 10. Sécurité
+## 11. Sécurité
 
 - **Routes non protégées par défaut.** Ajoute tes middlewares (`auth:sanctum`, `throttle:60,1`, signature HMAC…) dans le fichier publié.
+- **Route callback non protégée par `auth`.** Pawapay l'appelle en externe. La sécurité repose sur la vérification de signature dans le handler.
 - **`PAWAPAY_API_TOKEN` côté serveur uniquement.** Ne jamais l'exposer au frontend.
 - **Restriction des valeurs** via la config : devises, langues, pays, providers, types de payeur.
 - **`customer_message` limité à 22 caractères** conformément à PawaPay.
@@ -728,10 +909,12 @@ $this->app->instance(PawapayConfigInterface::class, new RestrictedPawapayConfig)
 - **`client_reference_id` limité à 64 caractères**, alphanumérique avec tirets.
 - **`phone_number` au format E.164 sans `+`** validé par `FormRequest`.
 - **`data` bag** : les champs non réservés sont conservés dans un `StrictAssociative` typé, pas dans un tableau brut non contrôlé.
+- **Idempotence des callbacks** à la charge du handler applicatif.
+- **Vérification de signature des callbacks** à la charge du handler applicatif.
 
 ---
 
-## 11. Compatibilité
+## 12. Compatibilité
 
 | Version | Support |
 |---------|---------|

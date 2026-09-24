@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use AndyDefer\Actions\Http\Requests\EmptyRequest;
+use AndyDefer\LaravelPawapay\Http\Actions\CallbackAction;
 use AndyDefer\LaravelPawapay\Http\Actions\CheckDepositStatusAction;
 use AndyDefer\LaravelPawapay\Http\Actions\CreatePaymentPageAction;
 use AndyDefer\LaravelPawapay\Http\Actions\InitiateDepositAction;
@@ -48,4 +50,10 @@ Route::prefix('pawapay')
             CreatePaymentPageRequest::class,
             CreatePaymentPageAction::class,
         ))->name('create-payment-page');
+
+        Route::post('/callback', action_route(
+            EmptyRequest::class,
+            CallbackAction::class,
+        ))->name('callback');
+
     });

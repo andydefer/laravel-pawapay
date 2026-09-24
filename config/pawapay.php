@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use AndyDefer\LaravelPawapay\Callbacks\HandlesCallback;
 use AndyDefer\PhpPawapay\Enums\Country;
 use AndyDefer\PhpPawapay\Enums\Currency;
 use AndyDefer\PhpPawapay\Enums\Language;
@@ -42,12 +43,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Currencies
+    | Callback Handler
     |--------------------------------------------------------------------------
     |
-    | Devises autorisées. Par défaut : toutes les cases de l'enum Currency.
-    | Surcharger avec un tableau de valeurs (ex: ['USD', 'CDF']).
+    | FQCN du handler de callbacks lié à HandlesCallbacksInterface.
     |
+    */
+    'handle_callback_fqcn' => HandlesCallback::class,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Currencies
+    |--------------------------------------------------------------------------
     */
     'currencies' => Currency::cases(),
 
@@ -55,9 +62,6 @@ return [
     |--------------------------------------------------------------------------
     | Languages
     |--------------------------------------------------------------------------
-    |
-    | Langues autorisées. Par défaut : toutes les cases de l'enum Language.
-    |
     */
     'languages' => Language::cases(),
 
@@ -65,9 +69,6 @@ return [
     |--------------------------------------------------------------------------
     | Countries
     |--------------------------------------------------------------------------
-    |
-    | Pays autorisés. Par défaut : toutes les cases de l'enum Country.
-    |
     */
     'countries' => Country::cases(),
 
@@ -75,10 +76,6 @@ return [
     |--------------------------------------------------------------------------
     | Providers
     |--------------------------------------------------------------------------
-    |
-    | Fournisseurs Mobile Money autorisés. Par défaut : toutes les cases de
-    | l'enum Provider.
-    |
     */
     'providers' => Provider::cases(),
 
@@ -86,10 +83,6 @@ return [
     |--------------------------------------------------------------------------
     | Payer Types
     |--------------------------------------------------------------------------
-    |
-    | Types de payeur autorisés. Par défaut : toutes les cases de l'enum
-    | PayerType.
-    |
     */
     'payer_types' => PayerType::cases(),
 ];

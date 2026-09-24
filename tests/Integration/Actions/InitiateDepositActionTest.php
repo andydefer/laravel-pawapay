@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AndyDefer\LaravelPawapay\Tests\Integration\Actions;
 
+use AndyDefer\LaravelPawapay\Callbacks\HandlesCallback;
 use AndyDefer\LaravelPawapay\Contracts\PawapayConfigInterface;
 use AndyDefer\LaravelPawapay\Http\Actions\InitiateDepositAction;
 use AndyDefer\LaravelPawapay\Http\Requests\InitiateDepositRequest;
@@ -145,6 +146,11 @@ final class InitiateDepositActionTest extends IntegrationTestCase
             public function getApiToken(): string
             {
                 return 'test-token';
+            }
+
+            public function getHandleCallbackFqcn(): string
+            {
+                return HandlesCallback::class;
             }
 
             public function getBaseUrl(): PawaPayBaseUrl
