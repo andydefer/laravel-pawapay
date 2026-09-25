@@ -48,7 +48,7 @@
     "require": {
         "php": "^8.1",
         "andydefer/php-pawapay": "^0.15.4",
-        "andydefer/laravel-actions": "^2.11.14"
+        "andydefer/laravel-actions": "^2.11.15"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.6",
