@@ -19,31 +19,42 @@ use AndyDefer\PhpPawapay\Records\ResendDepositCallbackRecord;
 use AndyDefer\PhpPawapay\Services\PawapayService;
 
 /**
- * Test fixture that lets tests force a specific hook to return an error.
+ * Test fixture that lets tests force a specific hook to return an error
+ * or to mutate the incoming Record.
  *
- * Each public property holds an optional {@see ErrorResponseData}. When set,
- * the corresponding hook returns it, short-circuiting the flow and letting
- * the caller observe the error propagation.
+ * Each public property holds an optional value:
+ *  - `before*` hooks hold an `ErrorResponseData` (short-circuit) or a `Record` (mutation).
+ *  - `after*` hooks hold an `ErrorResponseData` (short-circuit) or `null`.
  */
 final class ErroringPawapayService extends PawapayService
 {
     public ?ErrorResponseData $beforeInitiateDepositError = null;
 
+    public ?InitiateDepositRecord $beforeInitiateDepositRecord = null;
+
     public ?ErrorResponseData $afterInitiateDepositError = null;
 
     public ?ErrorResponseData $beforeCheckDepositStatusError = null;
+
+    public ?CheckDepositStatusRecord $beforeCheckDepositStatusRecord = null;
 
     public ?ErrorResponseData $afterCheckDepositStatusError = null;
 
     public ?ErrorResponseData $beforeResendDepositCallbackError = null;
 
+    public ?ResendDepositCallbackRecord $beforeResendDepositCallbackRecord = null;
+
     public ?ErrorResponseData $afterResendDepositCallbackError = null;
 
     public ?ErrorResponseData $beforeCreatePaymentPageError = null;
 
+    public ?CreatePaymentPageRecord $beforeCreatePaymentPageRecord = null;
+
     public ?ErrorResponseData $afterCreatePaymentPageError = null;
 
     public ?ErrorResponseData $beforePredictProviderError = null;
+
+    public ?PredictProviderRecord $beforePredictProviderRecord = null;
 
     public ?ErrorResponseData $afterPredictProviderError = null;
 
@@ -55,9 +66,13 @@ final class ErroringPawapayService extends PawapayService
     /**
      * {@inheritDoc}
      */
-    protected function beforeInitiateDeposit(InitiateDepositRecord $record): ?ErrorResponseData
+    protected function beforeInitiateDeposit(InitiateDepositRecord $record): InitiateDepositRecord|ErrorResponseData
     {
-        return $this->beforeInitiateDepositError;
+        if ($this->beforeInitiateDepositError !== null) {
+            return $this->beforeInitiateDepositError;
+        }
+
+        return $this->beforeInitiateDepositRecord ?? $record;
     }
 
     /**
@@ -71,9 +86,13 @@ final class ErroringPawapayService extends PawapayService
     /**
      * {@inheritDoc}
      */
-    protected function beforeCheckDepositStatus(CheckDepositStatusRecord $record): ?ErrorResponseData
+    protected function beforeCheckDepositStatus(CheckDepositStatusRecord $record): CheckDepositStatusRecord|ErrorResponseData
     {
-        return $this->beforeCheckDepositStatusError;
+        if ($this->beforeCheckDepositStatusError !== null) {
+            return $this->beforeCheckDepositStatusError;
+        }
+
+        return $this->beforeCheckDepositStatusRecord ?? $record;
     }
 
     /**
@@ -87,9 +106,13 @@ final class ErroringPawapayService extends PawapayService
     /**
      * {@inheritDoc}
      */
-    protected function beforeResendDepositCallback(ResendDepositCallbackRecord $record): ?ErrorResponseData
+    protected function beforeResendDepositCallback(ResendDepositCallbackRecord $record): ResendDepositCallbackRecord|ErrorResponseData
     {
-        return $this->beforeResendDepositCallbackError;
+        if ($this->beforeResendDepositCallbackError !== null) {
+            return $this->beforeResendDepositCallbackError;
+        }
+
+        return $this->beforeResendDepositCallbackRecord ?? $record;
     }
 
     /**
@@ -103,9 +126,13 @@ final class ErroringPawapayService extends PawapayService
     /**
      * {@inheritDoc}
      */
-    protected function beforeCreatePaymentPage(CreatePaymentPageRecord $record): ?ErrorResponseData
+    protected function beforeCreatePaymentPage(CreatePaymentPageRecord $record): CreatePaymentPageRecord|ErrorResponseData
     {
-        return $this->beforeCreatePaymentPageError;
+        if ($this->beforeCreatePaymentPageError !== null) {
+            return $this->beforeCreatePaymentPageError;
+        }
+
+        return $this->beforeCreatePaymentPageRecord ?? $record;
     }
 
     /**
@@ -119,9 +146,13 @@ final class ErroringPawapayService extends PawapayService
     /**
      * {@inheritDoc}
      */
-    protected function beforePredictProvider(PredictProviderRecord $record): ?ErrorResponseData
+    protected function beforePredictProvider(PredictProviderRecord $record): PredictProviderRecord|ErrorResponseData
     {
-        return $this->beforePredictProviderError;
+        if ($this->beforePredictProviderError !== null) {
+            return $this->beforePredictProviderError;
+        }
+
+        return $this->beforePredictProviderRecord ?? $record;
     }
 
     /**

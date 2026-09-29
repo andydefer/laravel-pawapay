@@ -34,6 +34,10 @@ final class CreatePaymentPageActionTest extends IntegrationTestCase
         'language' => 'EN',
         'country' => 'COD',
         'customer_message' => 'Payment order',
+        'metadata' => [
+            'order_id' => 'ORD-123456',
+            'customer_segment' => 'premium',
+        ],
     ];
 
     protected function setUp(): void
@@ -120,6 +124,9 @@ final class CreatePaymentPageActionTest extends IntegrationTestCase
             'phone_number' => '243812345678',
             'language' => 'EN',
             'country' => 'COD',
+            'metadata' => [
+                'order_id' => 'ORD-123456',
+            ],
         ]);
 
         // Assert: validation fails before the action runs
